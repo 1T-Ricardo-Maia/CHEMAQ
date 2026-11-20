@@ -31,6 +31,8 @@
 | Termo de Referência | 35/2026 | [tr.md](tr.md) | [06-TR-35-2026.pdf](pdf/06-TR-35-2026.pdf) |
 | Estudo Técnico Preliminar | 34/2026 | [etp.md](etp.md) | [07-ETP-34-2026.pdf](pdf/07-ETP-34-2026.pdf) |
 
+Capa, Termo de Autuação, atos de aprovação, autorização, Mapa de Riscos, declaração orçamentária e a versão inicial do processo (R$ 13.653,80, de 15/11/2026) estão em [pecas-administrativas.md](pecas-administrativas.md).
+
 O DFD foi guardado com telefone, e-mail e matrícula tarjados. Por isso a cópia daqui não serve como documento assinado; o original fica no processo.
 
 O anexo do ETP e do TR, "Anexo_III_TR35_Trocador_de_Calor.pdf", não veio junto. O conteúdo dele está transcrito no Anexo III do TR (ver [tr.md](tr.md)).

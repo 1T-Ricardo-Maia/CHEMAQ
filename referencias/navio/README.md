@@ -33,3 +33,5 @@ Dados fixos que se repetem em todas as dispensas. Fonte: processo 63387.000262/2
 | Plano interno | P.4HN.RT.0.Z.2.KX |
 
 Confirme a fonte e o plano interno a cada novo exercício.
+
+Controles (PPSS, consumo de ODM, SITREP de CLG): ver [controles.md](controles.md).

@@ -20,7 +20,8 @@ Regras da pasta:
 
 | Processo | Objeto | Valor | Pasta |
 |---|---|---|---|
-| 63387.000262/2026-44 | Revisão dos sistemas de lubrificação e arrefecimento do MCP BE (MTU 6R 199 TB60), com trocador de calor novo | R$ 50.411,88 | [2026-mcp-be-lubrificacao-arrefecimento](dispensas/2026-mcp-be-lubrificacao-arrefecimento/README.md) |
+| 63387.000262/2026-44 | Revisão dos sistemas de lubrificação e arrefecimento do MCP BE (MTU 6R 199 TB60), com trocador de calor novo | R$ 50.411,88 | [2026-mcp-be-lubrificacao-arrefecimento](dispensas/2026-mcp-be-lubrificacao-arrefecimento/README.md) (inclui [peças administrativas e textos-padrão](dispensas/2026-mcp-be-lubrificacao-arrefecimento/pecas-administrativas.md)) |
+| 63387.000248/2026-41 | Equipamentos de cozinha (moedor, fatiador), frigobar e ar-condicionado split | R$ 6.500,00 | [2026-equipamentos-subsistencia](dispensas/2026-equipamentos-subsistencia/README.md) |
 
 ### Manuais dos motores
 
@@ -32,8 +33,12 @@ Os PDFs dos manuais ficam fora do repositório (ver [manuais/README.md](manuais/
 
 ### Catálogos CATMAT/CATSER
 
-Ver [catalogos/README.md](catalogos/README.md). Por enquanto só traz o CATSER usado na última dispensa.
+Ver [catalogos/README.md](catalogos/README.md). Traz o CATSER e os CATMAT das dispensas resumidas.
 
 ### Dados do navio
 
-Ver [navio/README.md](navio/README.md).
+Ver [navio/README.md](navio/README.md) e as [planilhas de controle](navio/controles.md) (PPSS, consumo de ODM e SITREP de CLG).
+
+### Acervo completo da pasta local
+
+[acervo.md](acervo.md) lista os 324 documentos da pasta `CHEMAQ` do computador, agrupados por sistema, com nº de páginas e se o PDF tem texto pesquisável.

@@ -9,7 +9,9 @@ Resumo dos quatro documentos do fabricante que temos. Os PDFs **não** ficam no 
 | Desenho de instalação MTU do Brasil nº 1199112415, rev. 0 | 1 (A0) | Vistas, dimensões e conexões do motor |
 | Manual de Instalação de Motores Marítimos, séries 099, 1000 e 1800 (MTU do Brasil, mar/2002) | 58 | Requisitos de instalação por sistema (ar, escape, arrefecimento, combustível, lubrificação, elétrico, montagem, alinhamento, tomadas de força) |
 
-Ainda falta o **Manual de Operação e Manutenção** (seção Dados Técnicos e Tabela de Manutenção), que é a fonte citada no TR 35/2026.
+| Manual de Operação e Manutenção, motores 6R 199 TB50A/TB50B/TB60, doc. 1199112201, rev. 05/2012 | 85 | Operação, diagnóstico de defeitos, **plano de manutenção**, procedimentos, dados técnicos, torques, óleos e aditivos |
+
+O arquivo local do Manual de O&M se chama "Manual Operação e Manutenção series 099 1000 1800.pdf", mas o conteúdo é o manual da **série 6R 199**. Há também, na pasta local, o Manual de Oficina da série 199 (242 páginas), o catálogo de peças 1199112200 rev. 2 e a lista de sobressalentes do painel ADKL; ver o [catálogo do acervo](../../acervo.md).
 
 ## Dados do motor (Technical Sales Documentation)
 
@@ -105,6 +107,121 @@ Conta rápida: 216 g/kWh x 294 kW ≈ 63,5 kg/h ≈ 76 L/h por motor a plena car
 | Rotação de partida | 100 a 120 rpm |
 | Inclinação contínua máxima | longitudinal 12° (proa para baixo) / 6° (para cima); transversal 10° |
 
+## Manual de Operação e Manutenção (1199112201, rev. 05/2012)
+
+É a fonte "seção Dados Técnicos" citada no TR. O MCP do navio é o **6R 199 TB60, regime 1A (serviço pesado)**, coluna **M61** das tabelas (1.850 rpm, 294 kW).
+
+### Dados técnicos da coluna M61 (1.850 rpm)
+
+| Item | Valor |
+|---|---|
+| Consumo específico (FSP, garantido) | 205 g/kWh |
+| Pressão do ar antes do cilindro (abs.) | 2,45 bar |
+| Temperatura de escape após o turbo | 420 °C |
+| Calor dissipado pelo fluido de arrefecimento (com resfriador de óleo) | 198 kW |
+| Temperatura do fluido na saída do cabeçote: projeto / operação | 85 °C / 75 a 90 °C |
+| Alarme / parada por temperatura | 96 °C / 99 °C |
+| Bomba de circulação, vazão | 22,5 m³/h |
+| Pressão de entrada da bomba de circulação mín./máx. | 0,1 / 1,2 bar |
+| Diferencial máximo fora do motor (fluido) | 0,5 bar |
+| Válvula da tampa: sobrepressão / depressão | 1,0 / 0,1 bar |
+| Pressão de projeto do equipamento de arrefecimento | 2,5 bar |
+| Bomba de água bruta, vazão (e vazão no trocador) | 13,5 m³/h |
+| Bomba de água bruta, diferencial | 0,6 bar |
+| Bomba de água bruta, pressão de entrada mín./máx. | -0,2 / 0,5 bar |
+| Diferencial máximo fora do motor (água bruta) | 0,5 bar |
+| Óleo: temperatura após / antes do resfriador | 80 a 90 °C / 90 a 100 °C |
+| Óleo: pressão de operação | 3,5 a 5,0 bar |
+| Óleo: alarme / parada / marcha lenta | 3,0 bar / 2,0 bar / > 1,5 bar |
+| Bomba alimentadora: vazão | 4,5 L/min |
+| Pressão de injeção dos bicos (nominal / mínima) | 200 + 8 bar / 180 bar |
+| Pressão de compressão mínima | 20 bar |
+| Folga de válvulas (frio): admissão / escape | 0,30 mm / 0,50 mm |
+| Ordem de injeção | 1-5-3-6-2-4 (cilindro 6 do lado do volante); rotação anti-horária vista pelo volante |
+| Sobrerrotação: sinal / corte de ar | 2.080 / 2.130 rpm |
+| Temperatura mínima para plena carga | 50 °C |
+| Volume de fluido de arrefecimento (com trocador) | 32 L |
+| Óleo: enchimento inicial / cárter MIN / MAX | 29 L / 17 L / 26 L |
+| Peso seco | 975 kg |
+
+### Plano de manutenção para o regime 1A (Categoria III)
+
+| Horas | Manutenção |
+|---|---|
+| 25 a 30 h (motor novo ou recondicionado) | Inicial |
+| a cada 250 h (250, 750, 1.250, 1.750...) | A |
+| a cada 500 h (500, 1.500, 2.500, 3.500) | B |
+| a cada 1.000 h (1.000, 3.000) | C |
+| 2.000 h | D |
+| 4.000 h | E |
+
+A manutenção A deve ser feita pelo menos uma vez por ano. Com combustível acima de 1% de enxofre, usar o plano da Categoria I (mais frequente). Independentemente das horas: fluido de arrefecimento todo ano, elemento do filtro de ar a cada 2 anos, mangueiras e abraçadeiras de arrefecimento e combustível a cada 4 anos.
+
+Diário: nível do fluido, estanqueidade do arrefecimento, drenar o pré-filtro separador, estanqueidade do combustível, nível do óleo, estanqueidade da admissão.
+
+O que entra em cada manutenção (Tabela de Categorias, p. 5-3; conferir no PDF antes de usar em OS):
+
+| Item (procedimento) | Inicial | A | B | C | D | E |
+|---|---|---|---|---|---|---|
+| Folga de válvulas (MB01) | x | | x | x | x | x |
+| Compressão dos cilindros (MB02) | | | | | | x |
+| Aperto dos elementos de fixação (MB03) | x | | x | x | x | x |
+| Nível do fluido, bomba de circulação, conexões do arrefecimento (SR01, SR08, SR09) | x | x | x | x | x | x |
+| Válvula termostática (SR06) | | | | | | x |
+| Mangueiras do arrefecimento (SR07) | x | | | x | x | x |
+| Trocador de calor: limpar e testar estanqueidade (SR12, SR13) | | | | x | x | x |
+| Trocador de calor: anodo (SR15) | | x | x | x | x | x |
+| Filtro de água bruta (SR16) | x | x | x | x | x | x |
+| Bomba de água bruta: verificar rotor (SR17) | | x | x | x | | x |
+| Bomba de água bruta: substituir rotor (SR18) | | | | x | x | x |
+| Pré-filtro separador (SC03), conexões e mangueiras de combustível (SC16, SC17) | x | x | x | x | x | x |
+| Filtro duplo de combustível (SC05) | | | x | x | x | x |
+| Pré-filtro da bomba injetora (SC06), alavancas da bomba (SC15) | x | | x | x | x | x |
+| Início de fornecimento da bomba injetora (SC09) | | | | | | x |
+| Teste dos bicos injetores (SC12) | | | | | x | x |
+| Nível do óleo, filtro de óleo, **troca de óleo** (SL01, SL05, SL06) | x | x | x | x | x | x |
+| Análise do óleo (SL04) | | | | | | x |
+| Filtro de ar: limpar (SA01) / substituir elemento (SA02) | x / | x / | / x | / x | / x | / x |
+| Pós-arrefecedor: limpar, estanqueidade, anodo (SA04 a SA06) | | | | x | x | x |
+| Estanqueidade de admissão e escape (SA07, ST02) | x | | x | x | x | x |
+| Bateria, aterramento, cabos (SE01 a SE03) | x | | | | | |
+| Motor de partida e alternador (SE04 a SE06) | | | | | x | x |
+| Válvula PCV (SV01) | | | | x | x | x |
+| Correias: estado e tensão (SP01, SP02) | x | x | x | x | x | x |
+
+Na prática, para o MCP do navio: **troca de óleo e filtro de óleo a cada 250 h**, filtro de combustível a cada 500 h, limpeza do trocador e do pós-arrefecedor e troca do rotor da bomba de água bruta a cada 1.000 h, bicos a cada 2.000 h e revisão completa (compressão, termostática, bomba injetora, análise de óleo) a cada 4.000 h.
+
+### Torques principais (p. 7-12 a 7-14, tolerância 15%, rosca levemente oleada)
+
+| Elemento | Torque |
+|---|---|
+| Parafuso do cabeçote | 10 → 50 → 100 → 140+10 → 180+10 N·m, mais 90°+10° |
+| Capa do mancal / bloco | 300+30 N·m + 90°+10° |
+| Capa de biela | 40+10 N·m + 90°+10° |
+| Volante / árvore de manivelas | 200+20 N·m + 90°+20° |
+| Polia da árvore de manivelas | 200 N·m |
+| Bujão de drenagem do cárter | 80 N·m |
+| Bujão de dreno do fluido / bloco | 55 N·m |
+| Resfriador de óleo / bloco | 40 N·m |
+| Tampa de válvulas | 25 N·m |
+| Bico injetor: fixação / porta-bico | 70 / 80 N·m |
+| Tubo de alta pressão (porcas) | 25 N·m |
+| Tubo de lubrificação (pressão) / turbo e / resfriador | 40 N·m |
+| Curva de escape e coletor de escape / cabeçote | 60+10 N·m |
+| Coletor de admissão / cabeçote | 25 N·m |
+| Turbo / curva de escape | 50 N·m |
+| Filtro de óleo / bloco | 60 N·m |
+| Motor de partida / carcaça do volante | 80 N·m |
+
+Para parafusos normalizados, há tabela por bitola e classe 8.8 / 10.9 (norma MTN 5008) na p. 7-14.
+
+### Óleos, aditivos e combustível (p. 7-15 a 7-17)
+
+- **Óleo do motor**: SAE 15W40 (ou 10W40/5W40 sintético), classe Mercedes-Benz 228.1 ou 228.3. Exemplos da lista: Lubrax Extra Turbo / Top Turbo, Rimula, Delvac, Ursa, Urania, Essolube, Total Rubia, Castrol Tection.
+- **Fluido de arrefecimento em clima quente** (duas opções): aditivo anticorrosivo solúvel (ex.: Glysacorr) a 9 a 11%, trocar no máximo a cada 3 anos; ou óleo anticorrosivo emulsionável (ex.: Shell Donax CS, Celurust S-120) a 1 a 2%, trocar no máximo a cada 6 meses. Anticongelante só abaixo de 0 °C. Usar só água limpa: nunca água salobra, de chuva, industrial ou destilada.
+- **Limpeza do sistema de arrefecimento**: desengordurante solúvel a 5% (ex.: P3 AL 580 E).
+- **Combustível**: diesel DIN 51601 / ASTM D 975 1D-2D, no máximo 1% de enxofre, filtrado e sem água. O manual diz que não deve ser usado "Diesel Marítimo (Marine Diesel)". Vale confirmar se o ODM fornecido ao navio atende à especificação, já que o nome coincide.
+
 ## Desenho de instalação 1199112415
 
 - Comprimento total 1.880 mm; largura 1.009 mm; altura 1.521 mm. Embalagem: 2.000 x 1.100 x 1.650 mm.
@@ -135,14 +252,20 @@ Pontos que importam para a manutenção a bordo:
 
 ## Divergências com o TR 35/2026
 
-A Tabela 2 do Anexo III do TR foi tirada do Manual de Operação e Manutenção. A ficha técnica de vendas traz alguns valores diferentes:
+A Tabela 2 do Anexo III do TR 35/2026 diz ter sido tirada da seção Dados Técnicos do Manual de O&M, mas parte dos valores não confere com o manual:
 
-| Parâmetro | TR 35/2026 (Manual de O&M) | Technical Sales Documentation |
-|---|---|---|
-| Temperatura de operação na saída | 83 a 95 °C | 75 a 90 °C |
-| Vazão da bomba de água bruta a 1.850 rpm | 13,5 m³/h | 16,3 m³/h |
-| Pressão mínima de entrada da bomba de água bruta | -0,2 bar | 0,1 bar |
-| Volume de fluido de arrefecimento | 32 L | 36 L (com trocador) |
-| Pressão de projeto do trocador | ≥ 2,0 bar (exigência do TR) | 2,5 bar |
+| Parâmetro (1.850 rpm) | TR 35/2026 | Manual de O&M (M61) | Ficha técnica de vendas |
+|---|---|---|---|
+| Temperatura de operação na saída do cabeçote | 83 a 95 °C | **75 a 90 °C** | 75 a 90 °C |
+| Alarme / máxima (parada) | 97 / 100 °C | **96 / 99 °C** | 97 / 100 °C |
+| Vazão da bomba de água bruta | 13,5 m³/h | 13,5 m³/h | 16,3 m³/h |
+| Pressão de entrada da bomba de água bruta, mín. | -0,2 bar | -0,2 bar | 0,1 bar |
+| Volume de fluido de arrefecimento | 32 L | 32 L | 36 L |
+| Pressão de projeto do trocador | ≥ 2,0 bar (exigência do TR) | **2,5 bar** | 2,5 bar |
+| Calor rejeitado ao fluido de arrefecimento | (não citado) | 198 kW | 260 kW |
 
-Alarme (97 °C), máxima (100 °C), vazão da bomba de circulação (22,5 m³/h), pressões da válvula de alívio e da entrada da bomba de circulação batem nos dois documentos. As diferenças podem vir de revisões diferentes ou de outra bomba de água bruta. Na próxima especificação de trocador, conferir com o Manual de O&M de bordo e usar os 260 kW de calor rejeitado na memória de cálculo.
+Vazões da bomba de circulação, pressões da tampa, pressão de entrada da bomba de circulação e volume batem entre o TR e o manual. Para a próxima especificação de trocador ou de teste de aceitação:
+
+- usar a faixa de operação de 75 a 90 °C e o alarme de 96 °C do manual de bordo;
+- exigir pressão de projeto de 2,5 bar;
+- na memória de cálculo, dimensionar para o maior calor rejeitado (260 kW, da ficha de vendas), por segurança.
