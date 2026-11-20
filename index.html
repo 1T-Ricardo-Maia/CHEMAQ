@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CHEMAQ · Departamento de Máquinas</title>
+<meta name="description" content="Gestão do Departamento de Máquinas: manutenção, combustível e comissões.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="selo" aria-hidden="true">
+    <svg viewBox="0 0 48 48" width="40" height="40"><circle cx="24" cy="24" r="21" fill="none" stroke="currentColor" stroke-width="2.5"/><circle cx="24" cy="24" r="6" fill="currentColor"/><g stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M24 3v8M24 37v8M3 24h8M37 24h8M9.2 9.2l5.6 5.6M33.2 33.2l5.6 5.6M9.2 38.8l5.6-5.6M33.2 14.8l5.6-5.6"/></g></svg>
+  </div>
+  <div class="plate">CHEMAQ<small><span id="nomeNavio">Departamento de Máquinas</span></small></div>
+  <div class="clock" id="relogio" aria-live="off"><b>--:--</b>—</div>
+</header>
+
+<nav class="tabs" role="tablist" aria-label="Módulos">
+  <button role="tab" data-tab="painel" aria-selected="true">Painel</button>
+  <button role="tab" data-tab="manutencao" aria-selected="false">Manutenção</button>
+  <button role="tab" data-tab="combustivel" aria-selected="false">Combustível</button>
+  <button role="tab" data-tab="dispensa" aria-selected="false">Dispensa</button>
+  <button role="tab" data-tab="config" aria-selected="false">Configurações</button>
+</nav>
+
+<main>
+
+<!-- ═══════════ PAINEL ═══════════ -->
+<section id="tab-painel">
+  <div class="card dest hidden" id="cardBoasVindas">
+    <h2>Primeiros passos</h2>
+    <p>O CHEMAQ ainda está vazio. Comece cadastrando os equipamentos em <b>Manutenção › Equipamentos</b>, depois as rotinas do plano de manutenção. Para ver o site funcionando antes, carregue os dados de exemplo.</p>
+    <div class="acoes"><button class="btn" id="btnExemplo">Carregar dados de exemplo</button>
+      <button class="btn ghost" data-ir="manutencao:equipamentos">Cadastrar equipamentos</button></div>
+  </div>
+  <div class="kpis" id="kpis"></div>
+  <div class="grid2">
+    <div class="card warn"><h2>Manutenções vencidas <span class="n" id="nPainelVenc">0</span></h2><div id="painelVenc" class="scroller"></div></div>
+    <div class="card"><h2>A vencer <span class="n" id="nPainelAvencer">0</span></h2><div id="painelAvencer" class="scroller"></div></div>
+    <div class="card"><h2>Ordens de serviço abertas <span class="n" id="nPainelOs">0</span></h2><div id="painelOs" class="scroller"></div></div>
+    <div class="card"><h2>Horímetros</h2><div id="painelHor" class="scroller"></div></div>
+  </div>
+</section>
+
+<!-- ═══════════ MANUTENÇÃO ═══════════ -->
+<section id="tab-manutencao" class="hidden">
+  <div class="subtabs" role="tablist" aria-label="Manutenção">
+    <button data-sub="plano" aria-selected="true">Plano de manutenção</button>
+    <button data-sub="os" aria-selected="false">Ordens de serviço</button>
+    <button data-sub="equipamentos" aria-selected="false">Equipamentos</button>
+    <button data-sub="historico" aria-selected="false">Histórico</button>
+  </div>
+
+  <div data-subpainel="plano">
+    <div class="card">
+      <div class="cab"><h2>Rotinas do plano <span class="n" id="nRotinas">0</span></h2>
+        <div class="acoes"><button class="btn" id="btnNovaRotina">Nova rotina</button></div></div>
+      <div class="filtros">
+        <select id="fRotEquip" aria-label="Filtrar por equipamento"><option value="">Todos os equipamentos</option></select>
+        <div class="chips" id="fRotEstado">
+          <button class="chip" data-estado="" aria-pressed="true">Todas</button>
+          <button class="chip" data-estado="vencida" aria-pressed="false">Vencidas</button>
+          <button class="chip" data-estado="avencer" aria-pressed="false">A vencer</button>
+          <button class="chip" data-estado="emdia" aria-pressed="false">Em dia</button>
+        </div>
+      </div>
+      <div class="tabela-wrap"><table class="tabela" id="tabRotinas">
+        <thead><tr><th>Situação</th><th>Equipamento</th><th>Rotina</th><th>Periodicidade</th><th>Última execução</th><th>Próxima</th><th></th></tr></thead>
+        <tbody></tbody></table></div>
+      <p class="vazio hidden" id="vazioRotinas">Nenhuma rotina cadastrada. Cadastre os equipamentos e depois as rotinas, como no plano do fabricante (ex.: troca de óleo a cada 250 h).</p>
+    </div>
+  </div>
+
+  <div data-subpainel="os" class="hidden">
+    <div class="card">
+      <div class="cab"><h2>Ordens de serviço <span class="n" id="nOs">0</span></h2>
+        <div class="acoes"><button class="btn" id="btnNovaOs">Nova OS</button></div></div>
+      <div class="filtros">
+        <div class="chips" id="fOsStatus">
+          <button class="chip" data-status="Aberta" aria-pressed="true">Abertas</button>
+          <button class="chip" data-status="Concluída" aria-pressed="false">Concluídas</button>
+          <button class="chip" data-status="" aria-pressed="false">Todas</button>
+        </div>
+      </div>
+      <div class="tabela-wrap"><table class="tabela" id="tabOs">
+        <thead><tr><th>Nº</th><th>Abertura</th><th>Equipamento</th><th>Tipo</th><th>Serviço</th><th>Status</th><th></th></tr></thead>
+        <tbody></tbody></table></div>
+      <p class="vazio hidden" id="vazioOs">Nenhuma ordem de serviço neste filtro.</p>
+    </div>
+  </div>
+
+  <div data-subpainel="equipamentos" class="hidden">
+    <div class="card">
+      <div class="cab"><h2>Equipamentos <span class="n" id="nEquip">0</span></h2>
+        <div class="acoes"><button class="btn" id="btnNovoEquip">Novo equipamento</button></div></div>
+      <div class="tabela-wrap"><table class="tabela" id="tabEquip">
+        <thead><tr><th>Tag</th><th>Equipamento</th><th>Sistema</th><th>Fabricante / modelo</th><th class="num">Horímetro</th><th></th></tr></thead>
+        <tbody></tbody></table></div>
+      <p class="vazio hidden" id="vazioEquip">Nenhum equipamento cadastrado.</p>
+    </div>
+  </div>
+
+  <div data-subpainel="historico" class="hidden">
+    <div class="card">
+      <div class="cab"><h2>Histórico de manutenção <span class="n" id="nHist">0</span></h2>
+        <div class="acoes"><button class="btn ghost" id="btnCsvHist">Exportar planilha</button></div></div>
+      <div class="filtros">
+        <select id="fHistEquip" aria-label="Filtrar por equipamento"><option value="">Todos os equipamentos</option></select>
+        <input type="text" id="fHistBusca" placeholder="Buscar no serviço, peças ou executante" aria-label="Buscar">
+      </div>
+      <ol class="linhaTempo" id="listaHist"></ol>
+      <p class="vazio hidden" id="vazioHist">Nenhum serviço concluído ainda. Ao concluir uma OS, ela entra aqui.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ COMBUSTÍVEL ═══════════ -->
+<section id="tab-combustivel" class="hidden">
+  <div class="kpis" id="kpisComb"></div>
+  <div class="card">
+    <div class="cab"><h2>Consumo diário por motor <span class="n" id="combPeriodo">últimos 30 lançamentos</span></h2></div>
+    <div id="graficoComb" class="grafico"></div>
+  </div>
+  <div class="card">
+    <div class="cab"><h2>Lançamentos <span class="n" id="nComb">0</span></h2>
+      <div class="acoes"><button class="btn" id="btnNovoComb">Lançar dia</button>
+        <button class="btn ghost" id="btnCsvComb">Exportar planilha</button></div></div>
+    <div class="tabela-wrap"><table class="tabela" id="tabComb">
+      <thead></thead><tbody></tbody></table></div>
+    <p class="vazio hidden" id="vazioComb">Nenhum lançamento. Antes do primeiro, marque em Equipamentos quais consomem combustível e informe o ROB inicial em Configurações.</p>
+  </div>
+  <div class="card">
+    <h2>Rendimento por motor</h2>
+    <div class="tabela-wrap"><table class="tabela" id="tabRend">
+      <thead><tr><th>Motor</th><th class="num">Horas</th><th class="num">Litros</th><th class="num">L/h médio</th><th class="num">L/h últimos 7 lanç.</th></tr></thead>
+      <tbody></tbody></table></div>
+  </div>
+</section>
+
+<!-- ═══════════ DISPENSA ═══════════ -->
+<section id="tab-dispensa" class="hidden">
+  <div class="card" id="cardDispLista">
+    <div class="cab"><h2>Dispensas eletrônicas <span class="n" id="nDisp">0</span></h2>
+      <div class="acoes"><button class="btn" id="btnNovaDisp">Nova dispensa</button></div></div>
+    <p class="hint">Escolha o equipamento, descreva o que foi constatado e o que precisa ser feito. O CHEMAQ monta o DFD em Word e os textos do ETP, do TR e do Aviso no formato dos campos do Compras.gov.br, no mesmo padrão da sua última dispensa (Proc. 63387.000262/2026-44). Os dados fixos (OM, UASG, responsáveis) ficam em Configurações.</p>
+    <div class="tabela-wrap"><table class="tabela" id="tabDisp">
+      <thead><tr><th>Processo</th><th>Objeto</th><th class="num">Valor</th><th>Atualizado</th><th></th></tr></thead>
+      <tbody></tbody></table></div>
+    <p class="vazio hidden" id="vazioDisp">Nenhuma dispensa ainda. Também dá para começar de uma OS corretiva, pelo botão “Dispensa”.</p>
+  </div>
+
+  <div id="dispEditor" class="hidden">
+    <form id="formDisp" autocomplete="off">
+      <div class="card">
+        <div class="passo">Passo 1</div>
+        <h2>O que vai ser contratado</h2>
+        <div class="row">
+          <div><label>Equipamento</label><select name="equipId" id="dEquip"></select></div>
+          <div><label>Tipo do objeto (DFD)</label><select name="tipoObjeto">
+            <option>Serviço não continuado</option><option>Serviço continuado SEM dedicação exclusiva de mão de obra</option>
+            <option>Serviço continuado COM dedicação exclusiva de mão de obra</option><option>Material de consumo</option>
+            <option>Material permanente/equipamento</option></select></div>
+        </div>
+        <div><label>Serviço (como aparece no objeto)</label><input type="text" name="servicoTitulo" placeholder="revisão do sistema de arrefecimento"></div>
+        <div class="row">
+          <div><label>Equipamento por extenso, com artigo</label><input type="text" name="alvo" placeholder="o motor de combustão principal de boreste (MCP BE)"></div>
+          <div><label>Identificação técnica</label><input type="text" name="identificacao" placeholder="motor diesel marítimo MTU 6R 199 TB60, de 294 kW (400 CV) a 1.850 rpm"></div>
+        </div>
+        <div class="row">
+          <div><label>Função a bordo</label><input type="text" name="funcao" placeholder="é um dos dois únicos meios de propulsão da embarcação"></div>
+          <div><label>Empresa especializada em</label><input type="text" name="area" placeholder="manutenção de motores diesel marítimos"></div>
+          <div><label>Caráter</label><select name="carater"><option>preventivo e corretivo</option><option>corretivo</option><option>preventivo</option></select></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="passo">Passo 2</div>
+        <h2>Diagnóstico e escopo</h2>
+        <div><label>O que a Divisão de Máquinas constatou</label><textarea name="defeitos" rows="3" placeholder="vazamento na rede de alimentação de óleo do turbocompressor e degradação da bomba de água bruta"></textarea></div>
+        <div><label>Consequência se não for feito</label><textarea name="consequencias" rows="2"></textarea></div>
+        <div class="row">
+          <div><label>Serviços a executar (um por linha)</label><textarea name="servicos" rows="6" placeholder="substituição da bomba de água bruta por unidade nova&#10;substituição dos mangotes do sistema de arrefecimento"></textarea></div>
+          <div><label>Peças e materiais incluídos (um por linha)</label><textarea name="materiais" rows="6" placeholder="bomba de água bruta completa&#10;mangotes e abraçadeiras"></textarea></div>
+        </div>
+        <div class="row">
+          <div><label>Fora do escopo (um por linha)</label><textarea name="foraEscopo" rows="3" placeholder="a retífica geral do motor"></textarea></div>
+          <div><label>Benefícios esperados (um por linha)</label><textarea name="beneficios" rows="3"></textarea></div>
+        </div>
+        <div><label>Manuais e desenhos de referência</label><input type="text" name="referencias" placeholder="o Manual de Operação e Manutenção do motor e o desenho de instalação nº ..."></div>
+      </div>
+
+      <div class="card">
+        <div class="passo">Passo 3</div>
+        <h2>Dados do processo</h2>
+        <div class="row">
+          <div><label>Nº do processo (NUP)</label><input type="text" name="processoNum" placeholder="63387.000000/2026-00"></div>
+          <div class="estreito"><label>Pesquisa de preços nº</label><input type="text" name="pesquisaNum" placeholder="41/2026"></div>
+          <div class="estreito"><label>Catálogo</label><select name="catTipo"><option>CATSER</option><option>CATMAT</option></select></div>
+          <div class="estreito"><label>Código</label><input type="text" name="codigo" placeholder="13463"></div>
+        </div>
+        <div class="row">
+          <div class="estreito"><label>Unidade</label><input type="text" name="unidade" placeholder="SERV"></div>
+          <div class="estreito"><label>Quantidade</label><input type="number" min="1" step="1" name="qtd"></div>
+          <div><label>Valor estimado total (R$)</label><input type="text" name="valor" placeholder="50411,88" inputmode="decimal"></div>
+          <div class="estreito"><label>Prioridade</label><select name="prioridade"><option>ALTA</option><option>MÉDIA</option><option>BAIXA</option></select></div>
+          <div><label>Mês da conclusão</label><select name="mes"></select></div>
+        </div>
+        <div class="row">
+          <div class="estreito"><label>Código PAR</label><input type="text" name="parCodigo" placeholder="0054/2026"></div>
+          <div class="estreito"><label>Inclusão no PAR em</label><input type="date" name="parData"></div>
+          <div class="estreito"><label>Prazo de execução (dias)</label><input type="number" min="1" name="prazo"></div>
+          <div class="estreito"><label>Vigência (meses)</label><input type="number" min="1" name="vigencia"></div>
+          <div class="estreito"><label>Garantia (dias)</label><input type="number" min="0" name="garantia"></div>
+        </div>
+      </div>
+    </form>
+
+    <div class="card">
+      <div class="passo">Passo 4 · opcional</div>
+      <h2>Redação com IA</h2>
+      <p class="hint">Os textos já saem prontos a partir dos campos acima. Para uma redação técnica mais completa, como a da sua última dispensa, copie o pedido, cole no claude.ai junto com as páginas do manual e traga a resposta de volta. Não precisa de chave de API.</p>
+      <div class="acoes"><button class="btn ghost" id="btnPromptIA">Copiar pedido para a IA</button></div>
+      <div class="ia"><label for="dJson">Resposta da IA (JSON)</label>
+        <textarea id="dJson" rows="4" placeholder='{ "necessidade": "...", "requisitos": "...", ... }'></textarea>
+        <div class="acoes" style="margin-top:8px"><button class="btn" id="btnAplicarIA">Usar estes textos</button></div></div>
+    </div>
+
+    <div class="card">
+      <div class="passo">Passo 5</div>
+      <div class="cab"><h2>Documentos</h2>
+        <div class="acoes"><button class="btn" id="btnDfdDocx">Baixar DFD (.docx)</button>
+          <button class="btn ghost" id="btnTodosDocx">Baixar ETP, TR e Aviso (.docx)</button>
+          <button class="btn ghost" id="btnFecharDisp">Fechar</button></div></div>
+      <div class="subtabs docAbas" role="tablist">
+        <button data-doc="dfd" aria-selected="true">DFD</button>
+        <button data-doc="etp" aria-selected="false">ETP</button>
+        <button data-doc="tr" aria-selected="false">Termo de Referência</button>
+        <button data-doc="aviso" aria-selected="false">Aviso</button>
+      </div>
+      <div id="dispDocs"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ CONFIGURAÇÕES ═══════════ -->
+<section id="tab-config" class="hidden">
+  <div class="card">
+    <h2>Identificação do navio</h2>
+    <form id="formNavio" class="row">
+      <div><label for="cNome">Nome do navio</label><input type="text" id="cNome" name="nome" placeholder="ex.: NPa Exemplo"></div>
+      <div><label for="cInd">Indicativo</label><input type="text" id="cInd" name="indicativo"></div>
+      <div><label for="cChefe">Chefe de Máquinas</label><input type="text" id="cChefe" name="chefe"></div>
+    </form>
+  </div>
+  <div class="card">
+    <h2>Combustível</h2>
+    <form id="formCombCfg" class="row">
+      <div><label for="cRob">ROB inicial (L)</label><input type="number" step="any" min="0" id="cRob" name="robInicial"></div>
+      <div><label for="cRobData">Data do ROB inicial</label><input type="date" id="cRobData" name="robInicialData"></div>
+      <div><label for="cCap">Capacidade total (L)</label><input type="number" step="any" min="0" id="cCap" name="capacidade"></div>
+    </form>
+    <p class="hint">Os motores que aparecem no lançamento de combustível são os equipamentos marcados como “consome combustível”.</p>
+  </div>
+  <div class="card">
+    <h2>Dados fixos da dispensa</h2>
+    <form id="formDispCfg">
+      <div class="row">
+        <div><label>OM (por extenso)</label><input type="text" name="om" placeholder="Aviso Hidroceanográfico Fluvial Rio Tocantins"></div>
+        <div class="estreito"><label>UASG</label><input type="text" name="uasg" placeholder="784515"></div>
+        <div><label>Cidade</label><input type="text" name="cidade" placeholder="Belém, PA"></div>
+      </div>
+      <div class="row">
+        <div><label>Setor requisitante</label><input type="text" name="setor" placeholder="Divisão de Máquinas"></div>
+        <div><label>Local de execução</label><input type="text" name="local" placeholder="a bordo do navio, na Base Naval de Val-de-Cães, Belém-PA"></div>
+      </div>
+      <div class="row">
+        <div class="estreito"><label>Posto do responsável</label><input type="text" name="respPosto" placeholder="Primeiro-Tenente"></div>
+        <div><label>Responsável pela demanda</label><input type="text" name="respNome"></div>
+        <div class="estreito"><label>Telefone</label><input type="text" name="respTel"></div>
+        <div class="estreito"><label>Matrícula/SIAPE</label><input type="text" name="respMat"></div>
+        <div><label>E-mail</label><input type="text" name="respEmail"></div>
+      </div>
+      <div class="row">
+        <div class="estreito"><label>Posto do ordenador</label><input type="text" name="ordPosto"></div>
+        <div><label>Ordenador de despesas</label><input type="text" name="ordNome"></div>
+        <div><label>Função do ordenador</label><input type="text" name="ordFuncao" placeholder="Ordenador de Despesas"></div>
+      </div>
+      <div class="row">
+        <div><label>UGE</label><input type="text" name="uge" placeholder="Centro de Intendência da Marinha em Belém"></div>
+        <div><label>Quem elabora o PAR</label><input type="text" name="orgPar" placeholder="Centro de Hidrografia e Navegação do Norte (CHN-4)"></div>
+      </div>
+    </form>
+  </div>
+  <div class="card">
+    <h2>Backup</h2>
+    <p class="hint">Nesta versão os dados ficam guardados <b>neste navegador</b>. Exporte um backup com frequência e guarde no computador ou no pendrive. Para levar os dados a outro computador, importe o arquivo lá.</p>
+    <div class="acoes">
+      <button class="btn" id="btnBackup">Exportar backup</button>
+      <label class="btn ghost arquivo">Importar backup<input type="file" id="inBackup" accept=".json,application/json"></label>
+      <button class="btn ghost perigo" id="btnApagar">Apagar todos os dados</button>
+    </div>
+    <p class="hint" id="infoBackup"></p>
+  </div>
+</section>
+
+</main>
+
+<!-- ═══════════ JANELAS DE CADASTRO ═══════════ -->
+<dialog id="dlgEquip" aria-labelledby="dlgEquipTit">
+  <form method="dialog">
+    <h3 id="dlgEquipTit">Equipamento</h3>
+    <div class="row">
+      <div class="estreito"><label>Tag</label><input type="text" name="tag" placeholder="MCP-BB"></div>
+      <div><label>Nome *</label><input type="text" name="nome" required placeholder="Motor de Combustão Principal BB"></div>
+    </div>
+    <div class="row">
+      <div><label>Sistema</label><select name="sistema"></select></div>
+      <div><label>Local</label><input type="text" name="local" placeholder="Praça de Máquinas"></div>
+    </div>
+    <div class="row">
+      <div><label>Fabricante</label><input type="text" name="fabricante"></div>
+      <div><label>Modelo</label><input type="text" name="modelo"></div>
+      <div><label>Nº de série</label><input type="text" name="serie"></div>
+    </div>
+    <div class="row">
+      <div><label>Horímetro atual (h)</label><input type="number" step="any" min="0" name="horimetro"></div>
+      <div class="check"><label><input type="checkbox" name="consome"> Consome combustível (aparece no lançamento diário)</label></div>
+    </div>
+    <div><label>Observações</label><textarea name="obs" rows="2"></textarea></div>
+    <div class="rodape"><button class="btn ghost" value="cancelar" formnovalidate>Cancelar</button><button class="btn" value="salvar">Salvar</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlgRotina" aria-labelledby="dlgRotinaTit">
+  <form method="dialog">
+    <h3 id="dlgRotinaTit">Rotina de manutenção</h3>
+    <div><label>Equipamento *</label><select name="equipId" required></select></div>
+    <div><label>Serviço *</label><input type="text" name="descricao" required placeholder="Troca de óleo lubrificante e filtros"></div>
+    <div class="row">
+      <div><label>Periodicidade por</label><select name="base"><option value="horas">Horas de funcionamento</option><option value="dias">Calendário (dias)</option></select></div>
+      <div><label>A cada *</label><input type="number" step="any" min="1" name="intervalo" required></div>
+    </div>
+    <div class="row">
+      <div><label>Última execução (data)</label><input type="date" name="ultData"></div>
+      <div><label>Horímetro na última execução</label><input type="number" step="any" min="0" name="ultHoras"></div>
+    </div>
+    <div><label>Referência (manual, cartão, PMS)</label><input type="text" name="referencia" placeholder="Manual do fabricante, cap. 5"></div>
+    <div class="rodape"><button class="btn ghost" value="cancelar" formnovalidate>Cancelar</button><button class="btn" value="salvar">Salvar</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlgOs" aria-labelledby="dlgOsTit">
+  <form method="dialog">
+    <h3 id="dlgOsTit">Ordem de serviço</h3>
+    <div class="row">
+      <div><label>Equipamento *</label><select name="equipId" required></select></div>
+      <div><label>Rotina do plano</label><select name="rotinaId"><option value="">— serviço fora do plano —</option></select></div>
+    </div>
+    <div class="row">
+      <div><label>Tipo</label><select name="tipo"></select></div>
+      <div><label>Data de abertura *</label><input type="date" name="data" required></div>
+      <div><label>Status</label><select name="status"><option>Aberta</option><option>Concluída</option></select></div>
+    </div>
+    <div><label>Serviço / defeito *</label><textarea name="descricao" rows="2" required></textarea></div>
+    <fieldset class="conclusao">
+      <legend>Conclusão</legend>
+      <div class="row">
+        <div><label>Data de conclusão</label><input type="date" name="dataConclusao"></div>
+        <div><label>Horímetro na execução</label><input type="number" step="any" min="0" name="horimetro"></div>
+        <div><label>Executante</label><input type="text" name="executante"></div>
+      </div>
+      <div><label>Serviço executado</label><textarea name="executado" rows="2"></textarea></div>
+      <div><label>Peças e materiais usados</label><textarea name="pecas" rows="2" placeholder="1x filtro de óleo P/N ..., 40 L óleo SAE 40"></textarea></div>
+    </fieldset>
+    <div class="rodape"><button class="btn ghost" value="cancelar" formnovalidate>Cancelar</button><button class="btn" value="salvar">Salvar</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlgComb" aria-labelledby="dlgCombTit">
+  <form method="dialog">
+    <h3 id="dlgCombTit">Lançamento de combustível</h3>
+    <div class="row">
+      <div><label>Data *</label><input type="date" name="data" required></div>
+      <div><label>Situação</label><select name="situacao"><option>Porto</option><option>Viagem</option><option>Fundeado</option></select></div>
+    </div>
+    <div id="combMotores" class="motores"></div>
+    <div class="row">
+      <div><label>Recebido no dia (L)</label><input type="number" step="any" min="0" name="recebido"></div>
+      <div><label>ROB medido na sondagem (L)</label><input type="number" step="any" min="0" name="robMedido"></div>
+    </div>
+    <div class="check"><label><input type="checkbox" name="somaHoras" checked> Somar as horas de funcionamento aos horímetros dos motores</label></div>
+    <div><label>Observações</label><input type="text" name="obs"></div>
+    <div class="rodape"><button class="btn ghost" value="cancelar" formnovalidate>Cancelar</button><button class="btn" value="salvar">Salvar</button></div>
+  </form>
+</dialog>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<div id="dica" class="dica" role="tooltip" hidden></div>
+
+<script src="js/util.js"></script>
+<script src="js/store.js"></script>
+<script src="js/manutencao.js"></script>
+<script src="js/combustivel.js"></script>
+<script src="js/docx.js"></script>
+<script src="js/dispensa.js"></script>
+<script src="js/painel.js"></script>
+<script src="js/config.js"></script>
+<script src="js/exemplo.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
