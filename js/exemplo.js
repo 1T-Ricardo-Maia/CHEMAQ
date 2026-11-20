@@ -13,10 +13,9 @@ function carregarExemplo() {
   };
   const mcpBB = eq('MCP-BB', 'Motor de combustão principal de bombordo', 'Propulsão', 'MTU', '6R 199 TB60', 4812, true);
   const mcpBE = eq('MCP-BE', 'Motor de combustão principal de boreste', 'Propulsão', 'MTU', '6R 199 TB60', 4790, true);
-  const mca1 = eq('MCA-1', 'Motor de combustão auxiliar nº 1', 'Geração de energia', 'MWM', '', 9120, true);
-  const mca2 = eq('MCA-2', 'Motor de combustão auxiliar nº 2', 'Geração de energia', 'MWM', '', 8875, true);
+  const mca1 = eq('MCA-1', 'Motor de combustão auxiliar nº 1', 'Geração de energia', 'MWM', 'D229-6', 9120, true);
+  const mca2 = eq('MCA-2', 'Motor de combustão auxiliar nº 2', 'Geração de energia', 'MWM', 'D229-6', 8875, true);
   const bab = eq('BAB-BE', 'Bomba de água bruta do MCP BE', 'Arrefecimento', 'MTU', '', null, false);
-  const comp = eq('CAP-1', 'Compressor de ar de partida', 'Ar comprimido', '', '', 1430, false);
 
   const hoje = hojeIso();
   const rot = (e, descricao, base, intervalo, ultData, ultHoras, referencia) => {
@@ -31,7 +30,6 @@ function carregarExemplo() {
   rot(mca1, 'Troca de óleo lubrificante e filtros', 'horas', 250, somaDias(hoje, -20), 8900);
   rot(mca2, 'Troca de óleo lubrificante e filtros', 'horas', 250, somaDias(hoje, -25), 8700);
   rot(bab, 'Inspeção do rotor (impelidor) da bomba de água bruta', 'dias', 90, somaDias(hoje, -84), null);
-  rot(comp, 'Drenagem e inspeção das garrafas de ar', 'dias', 30, somaDias(hoje, -12), null);
   rot(mcpBE, 'Substituição dos anodos de sacrifício do trocador de calor', 'dias', 180, '', null);
 
   const os = (e, tipo, descricao, data, status, extra) => {
