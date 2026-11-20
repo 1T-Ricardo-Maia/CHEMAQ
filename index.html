@@ -123,18 +123,48 @@
 <section id="tab-combustivel" class="hidden">
   <div class="kpis" id="kpisComb"></div>
   <div class="card">
-    <div class="cab"><h2>Consumo diário por motor <span class="n" id="combPeriodo">últimos 30 lançamentos</span></h2></div>
+    <div class="cab"><h2>Consumo por lançamento <span class="n" id="combPeriodo">últimos 30 lançamentos</span></h2></div>
     <div id="graficoComb" class="grafico"></div>
   </div>
   <div class="card">
     <div class="cab"><h2>Lançamentos <span class="n" id="nComb">0</span></h2>
-      <div class="acoes"><button class="btn" id="btnNovoComb">Lançar dia</button>
+      <div class="acoes"><button class="btn" id="btnColarSond">Colar sondagem</button>
+        <button class="btn ghost" id="btnSondManual">Sondagem sem mensagem</button>
+        <button class="btn ghost" id="btnNovoComb">Lançar dia por motor</button>
+        <label class="btn ghost arquivo">Importar CONTROLE CLG.xlsx<input type="file" id="inPlanilhaClg" accept=".xlsx,.xlsm,.xls,.ods"></label>
         <button class="btn ghost" id="btnCsvComb">Exportar planilha</button></div></div>
-    <div class="tabela-wrap"><table class="tabela" id="tabComb">
+    <div class="tabela-wrap scrollerAlto"><table class="tabela" id="tabComb">
       <thead></thead><tbody></tbody></table></div>
-    <p class="vazio hidden" id="vazioComb">Nenhum lançamento. Antes do primeiro, marque em Equipamentos quais consomem combustível e informe o ROB inicial em Configurações.</p>
+    <p class="vazio hidden" id="vazioComb">Nenhum lançamento. Cole a mensagem de sondagem do WhatsApp ou importe o histórico da planilha CONTROLE CLG.</p>
+    <p class="hint">Exportar planilha e Copiar geram as colunas A a Y da aba Registro do CONTROLE CLG, na mesma ordem, para colar direto lá.</p>
   </div>
-  <div class="card">
+  <div class="grid2">
+    <div class="card">
+      <div class="cab"><h2>Trechos <span class="n" id="nTrechos">0</span></h2></div>
+      <p class="hint">Os trechos vêm da linha “Traslado:” da sondagem. Informe uma vez a distância de cada trecho em milhas náuticas; a média de litros por milha sai das sondagens.</p>
+      <div class="tabela-wrap"><table class="tabela" id="tabTrechos">
+        <thead><tr><th>Trecho</th><th class="num">Vezes</th><th class="num">L por vez</th><th class="num">Milhas</th><th class="num">L/nm</th><th></th></tr></thead>
+        <tbody></tbody></table></div>
+      <p class="vazio hidden" id="vazioTrechos">Nenhum trecho ainda.</p>
+      <datalist id="listaTrechos"></datalist>
+    </div>
+    <div class="card">
+      <div class="cab"><h2>Planejar comissão</h2>
+        <div class="acoes"><button class="mini" id="btnLimparPlano">Limpar</button></div></div>
+      <div class="tabela-wrap"><table class="tabela plano">
+        <thead><tr><th>Trecho</th><th class="num">Milhas</th><th class="num">L/nm</th><th class="num">Litros</th><th></th></tr></thead>
+        <tbody id="planoPernas"></tbody></table></div>
+      <button class="mini" id="btnAddPerna">+ trecho</button>
+      <form id="formPlano" class="row" style="margin-top:12px">
+        <div><label for="pDias">Dias parado</label><input type="number" step="any" min="0" id="pDias" name="diasPorto"></div>
+        <div><label for="pLdia">Consumo parado (L/dia)</label><input type="number" step="any" min="0" id="pLdia" name="litrosDia"></div>
+        <div><label for="pRes">Margem (%)</label><input type="number" step="any" min="0" id="pRes" name="reserva"></div>
+      </form>
+      <div id="planoResumo" class="planoResumo"></div>
+      <p class="aviso hidden" id="planoAviso"></p>
+    </div>
+  </div>
+  <div class="card" id="cardRend">
     <h2>Rendimento por motor</h2>
     <div class="tabela-wrap"><table class="tabela" id="tabRend">
       <thead><tr><th>Motor</th><th class="num">Horas</th><th class="num">Litros</th><th class="num">L/h médio</th><th class="num">L/h últimos 7 lanç.</th></tr></thead>
@@ -383,10 +413,11 @@
 
 <dialog id="dlgComb" aria-labelledby="dlgCombTit">
   <form method="dialog">
-    <h3 id="dlgCombTit">Lançamento de combustível</h3>
+    <h3 id="dlgCombTit">Lançamento do dia por motor</h3>
     <div class="row">
       <div><label>Data *</label><input type="date" name="data" required></div>
       <div><label>Situação</label><select name="situacao"><option>Porto</option><option>Viagem</option><option>Fundeado</option></select></div>
+      <div><label>Trecho</label><input type="text" name="trecho" list="listaTrechos" placeholder="Belém x Breves"></div>
     </div>
     <div id="combMotores" class="motores"></div>
     <div class="row">
@@ -399,12 +430,66 @@
   </form>
 </dialog>
 
+<dialog id="dlgSond" aria-labelledby="dlgSondTit">
+  <form method="dialog">
+    <h3 id="dlgSondTit">Colar sondagem</h3>
+    <label for="txtSond">Mensagem do WhatsApp (pode colar várias de uma vez)</label>
+    <textarea id="txtSond" rows="9" placeholder="*Sondagem*&#10;30/09/2026&#10;Dia - 03&#10;*Anterior* 20.019&#10;*Atual* 19.534&#10;Be ▶️2.03▶️10.082&#10;Bb▶️1.90▶️9.452&#10;Tanque serviço ▶️600&#10;*Consumo* : 485&#10;Traslado: Breves x Ponta Negra"></textarea>
+    <div id="previaSond" class="previaSond"></div>
+    <div class="rodape"><button class="btn ghost" value="cancelar" formnovalidate>Cancelar</button><button class="btn" value="salvar" id="btnLancarSond" disabled>Lançar sondagem</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlgSondEd" aria-labelledby="dlgSondEdTit">
+  <form method="dialog">
+    <h3 id="dlgSondEdTit">Sondagem</h3>
+    <div class="row">
+      <div><label>Data *</label><input type="date" name="data" required></div>
+      <div class="estreito"><label>Dia da comissão</label><input type="number" min="0" name="dia"></div>
+      <div><label>Situação</label><select name="situacao"><option>Porto</option><option>Viagem</option><option>Fundeado</option></select></div>
+    </div>
+    <div class="row">
+      <div><label>Trecho</label><input type="text" name="trecho" list="listaTrechos" placeholder="Breves x Ponta Negra"></div>
+      <div class="estreito"><label>Milhas (nm)</label><input type="number" step="any" min="0" name="milhas"></div>
+      <div><label>Comissão / observação</label><input type="text" name="comissao"></div>
+    </div>
+    <fieldset><legend>ODM (litros)</legend>
+      <div class="row">
+        <div><label>Anterior</label><input type="number" step="any" name="anterior"></div>
+        <div><label>Atual (BE + BB)</label><input type="number" step="any" name="robMedido"></div>
+        <div><label>Consumo</label><input type="number" step="any" min="0" name="consumo"></div>
+      </div>
+      <div class="row">
+        <div><label>BE (m)</label><input type="number" step="any" min="0" name="beM"></div>
+        <div><label>BE (L)</label><input type="number" step="any" min="0" name="beL"></div>
+        <div><label>BB (m)</label><input type="number" step="any" min="0" name="bbM"></div>
+        <div><label>BB (L)</label><input type="number" step="any" min="0" name="bbL"></div>
+      </div>
+      <div class="row">
+        <div><label>Tanque de serviço</label><input type="number" step="any" min="0" name="servico"></div>
+        <div><label>Recebido</label><input type="number" step="any" min="0" name="recebido"></div>
+        <div><label>Transferido</label><input type="number" step="any" min="0" name="transferido"></div>
+      </div>
+    </fieldset>
+    <fieldset><legend>Água</legend>
+      <div class="row">
+        <div><label>Aguada (L)</label><input type="number" step="any" min="0" name="aguada"></div>
+        <div><label>Consumo de água (L)</label><input type="number" step="any" min="0" name="consumoAgua"></div>
+      </div>
+    </fieldset>
+    <div><label>Observações</label><input type="text" name="obs"></div>
+    <details id="sondTextoBox" class="hidden"><summary class="hint">Mensagem original</summary><pre id="sondTexto" class="msgOriginal"></pre></details>
+    <div class="rodape"><button class="btn ghost" value="cancelar" formnovalidate>Cancelar</button><button class="btn" value="salvar">Salvar</button></div>
+  </form>
+</dialog>
+
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <div id="dica" class="dica" role="tooltip" hidden></div>
 
 <script src="js/util.js"></script>
 <script src="js/store.js"></script>
 <script src="js/manutencao.js"></script>
+<script src="js/sondagem.js"></script>
 <script src="js/combustivel.js"></script>
 <script src="js/docx.js"></script>
 <script src="js/dispensa.js"></script>

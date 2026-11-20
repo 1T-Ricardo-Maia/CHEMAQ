@@ -21,6 +21,8 @@ function bancoVazio() {
     os: [],
     combustivel: [],
     combConfig: { robInicial: null, robInicialData: '', capacidade: null },
+    trechos: [],
+    planoComb: {},
     dispensas: [],
     dispCfg: {
       om: '', uasg: '', cidade: '', setor: 'Divisão de Máquinas',
@@ -41,13 +43,14 @@ const DB = {
     return this.dados;
   },
 
-  salvar() {
+  /* silencioso: grava sem redesenhar as telas (usado enquanto a pessoa digita). */
+  salvar(silencioso) {
     try {
       localStorage.setItem(CHAVE_DB, JSON.stringify(this.dados));
     } catch (e) {
       toast('Não foi possível gravar no navegador. Faça um backup agora.', true);
     }
-    document.dispatchEvent(new CustomEvent('chemaq:mudou'));
+    if (!silencioso) document.dispatchEvent(new CustomEvent('chemaq:mudou'));
   },
 
   substituir(novo) {
