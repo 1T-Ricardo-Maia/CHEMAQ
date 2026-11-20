@@ -8,7 +8,8 @@
 
 const CHAVE_DB = 'chemaq.dados.v1';
 const SISTEMAS = ['Propulsão', 'Geração de energia', 'Auxiliares', 'Combustível e lubrificação',
-  'Arrefecimento', 'Ar comprimido', 'Governo', 'Elétrica', 'Casco e convés', 'Habitabilidade', 'Outros'];
+  'Arrefecimento', 'Ar comprimido', 'Governo', 'Incêndio e esgoto', 'Controle de poluição', 'Ventilação', 'Elétrica',
+  'Casco e convés', 'Embarcação orgânica', 'Habitabilidade', 'Outros'];
 const TIPOS_OS = ['Preventiva', 'Corretiva', 'Inspeção', 'Melhoria'];
 
 function bancoVazio() {

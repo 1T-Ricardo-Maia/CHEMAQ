@@ -60,6 +60,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const [aba, sub] = b.dataset.ir.split(':');
     irPara(aba, sub);
   });
+  $$('[data-carregar-navio]').forEach(b => b.onclick = () => {
+    const n = carregarEquipamentosNavio();
+    toast(n ? n + ' equipamentos do memorial cadastrados.' : 'Todos os equipamentos do memorial já estavam cadastrados.');
+    if (n) irPara('manutencao', 'equipamentos');
+  });
   $('#btnExemplo').onclick = () => { carregarExemplo(); toast('Dados de exemplo carregados.'); };
 
   document.addEventListener('chemaq:mudou', renderTudo);
