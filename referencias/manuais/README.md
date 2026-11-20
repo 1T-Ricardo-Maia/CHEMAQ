@@ -1,15 +1,10 @@
 # Manuais dos motores
 
-Pasta reservada para os manuais do MCP BB, do MCP BE (MTU 6R 199 TB60) e dos MCAs.
+Um resumo por motor. Os PDFs dos fabricantes **não** vão para o repositório, que é público: os manuais da MTU proíbem a reprodução sem autorização. Eles ficam nos arquivos do projeto CHEMAQ, na pasta `manuais/`.
 
-Para cada manual, criar uma subpasta com:
+| Equipamento | Resumo | Documentos que temos | Falta |
+|---|---|---|---|
+| MCP BB e MCP BE – MTU 6R 199 TB60 | [mtu-6r199tb60](mtu-6r199tb60/README.md) | Ficha técnica, curva de desempenho, desenho de instalação 1199112415, Manual de Instalação (séries 099/1000/1800) | Manual de Operação e Manutenção; Lista de Sobressalentes do Painel de Comando Local (ADKL-DE-0033-12) |
+| MCAs | ainda não | | tudo |
 
-- `README.md` com o resumo: modelo, potência e rotação, seção Dados Técnicos (pressões, temperaturas, vazões, volumes), especificação de óleo e fluido de arrefecimento, torques principais, rotinas de manutenção por horas e onde está cada tabela no PDF (página).
-- `pdf/` com o arquivo original, se o tamanho permitir (o GitHub recusa arquivos acima de 100 MB).
-
-Documentos já citados na última dispensa e que devem entrar aqui:
-
-- Manual de Operação e Manutenção do motor MTU 6R 199 TB60 (seção Dados Técnicos; Figura 1 do trocador de calor).
-- Desenho de instalação do motor MTU do Brasil nº 1199112415.
-- Lista de Sobressalentes do Painel de Comando Local, desenho ADKL-DE-0033-12.
-- Manual de Instalação de Motores Marítimos da MTU do Brasil (recomendações gerais; materiais do circuito de água bruta).
+Para cada motor novo, o resumo deve trazer: modelo, potência e rotação, dados técnicos (pressões, temperaturas, vazões, volumes), óleo e fluido especificados, torques principais, rotinas de manutenção por horas e a página de cada tabela no PDF.

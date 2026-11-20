@@ -24,7 +24,11 @@ Regras da pasta:
 
 ### Manuais dos motores
 
-Ainda vazio. Ver [manuais/README.md](manuais/README.md).
+| Equipamento | Resumo |
+|---|---|
+| MCP BB e BE – MTU 6R 199 TB60 (294 kW a 1.850 rpm) | [manuais/mtu-6r199tb60](manuais/mtu-6r199tb60/README.md) |
+
+Os PDFs dos manuais ficam fora do repositório (ver [manuais/README.md](manuais/README.md)).
 
 ### Catálogos CATMAT/CATSER
 
