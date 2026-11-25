@@ -170,7 +170,7 @@ function textosBase(P) {
     'objeto, e a reunião dos serviços em item único afasta o fracionamento indevido de despesa vedado pelo art. 75, § 1º, da Lei nº 14.133/2021.';
 
   const valorTxt = valor != null ? 'R$ ' + moeda(valor) + ' (' + extensoReais(valor) + ')' : 'R$ [valor]';
-  t.dfdValor = 'O custo estimado da contratação é de ' + valorTxt + ', correspondente à média das amostras da Pesquisa de Preços nº ' +
+  t.dfdValor = 'O custo estimado da contratação é de ' + valorTxt + ', correspondente ' + ({ mediana: 'à mediana', menor: 'ao menor preço' }[P.criterioPreco] || 'à média') + ' das amostras da Pesquisa de Preços nº ' +
     (P.pesquisaNum || '[nº]') + ', realizada no Compras.gov.br nos termos do art. 23 da Lei nº 14.133/2021 e da IN SEGES/ME nº 65/2021.';
   t.dfdData = 'A conclusão da contratação está prevista para ocorrer no mês de ' + (P.mes || MESES[new Date().getMonth()]) + ' do presente ano.';
   t.dfdPrioridade = (P.prioridade || 'ALTA') + '.';
@@ -190,6 +190,11 @@ function textosBase(P) {
     'referida norma, com a intenção de suprir a necessidade de levantamento de preços condizente com a realidade mercadológica no ' +
     'subsídio do processo em tela. Ademais, a medida de tendência central utilizada foi a média, para o referido item.';
 
+  const orcs = (P.orcamentos || []).filter(o => num(String(o.valor || '').replace(/\./g, '')) > 0);
+  if (orcs.length) t.mercado += ' Foram obtidas ' + orcs.length + ' (' + extensoInteiro(orcs.length).replace(/^um$/, 'uma').replace(/^dois$/, 'duas') +
+    ') propostas diretas de fornecedores especializados, com base no mesmo escopo técnico, e adotou-se como valor estimado ' +
+    ({ mediana: 'a mediana', menor: 'o menor' }[P.criterioPreco] || 'a média') + ' dos preços obtidos.';
+
   t.solucao = (material
     ? 'Será adquirido o material especificado, novo, de primeiro uso, original ou tecnicamente equivalente ao especificado pelo fabricante'
     : 'Será contratada empresa especializada em ' + (P.area || 'manutenção de equipamentos navais') + ' para executar, ' +
@@ -201,6 +206,7 @@ function textosBase(P) {
     'conforme o art. 23 da Lei nº 14.133/2021 e a IN SEGES/ME nº 65/2021; (iii) publicação do aviso de contratação direta no PNCP, com ' +
     'prazo mínimo de 3 (três) dias úteis (art. 75, § 3º); (iv) emissão da nota de empenho; e (v) ' +
     (material ? 'entrega do material' : 'execução do serviço a bordo') + ', com recebimento provisório e definitivo pela fiscalização.' +
+    (P.premissa ? '\n\n' + P.premissa : '') +
     (fora.length ? '\n\nNão integram o objeto ' + enumerar(fora) + '. Constatada a necessidade de alguma dessas providências durante a ' +
       'execução, ela será tratada em processo específico ou por alteração contratual, conforme previsto no Termo de Referência.' : '');
 
@@ -271,6 +277,7 @@ function textosBase(P) {
     'especificados pelo fabricante, vedado o emprego de peças remanufaturadas, recondicionadas ou usadas.\n\n' +
     'A indicação do fabricante e do modelo do equipamento' + (P.identificacao ? ' (' + P.identificacao.split(',')[0].replace(/^\w+\s(diesel\s)?(marítimo\s)?/, '') + ')' : '') +
     ', bem como a referência a manuais e desenhos, destina-se apenas a identificar o equipamento existente a bordo, vedada a exigência de marca.\n\n' +
+    (linhasDe(P.aceitacao).length ? 'Constituem critérios técnicos de aceitação do serviço:\n' + alineas(linhasDe(P.aceitacao)) + '\n\n' : '') +
     'O recebimento provisório não implica aceitação definitiva do ' + (material ? 'material' : 'serviço') + '.\n\n' +
     'Não haverá exigência da garantia da contratação dos arts. 96 e seguintes da Lei nº 14.133, de 2021, pelas razões constantes do Estudo Técnico Preliminar.';
   t.trExecucao = '5.1. O prazo de ' + (material ? 'entrega' : 'execução do serviço') + ' é de ' + prazo + ' (' + extensoInteiro(prazo) +

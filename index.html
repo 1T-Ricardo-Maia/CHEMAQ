@@ -69,6 +69,7 @@
   <button role="tab" data-tab="manutencao" aria-selected="false">Manutenção</button>
   <button role="tab" data-tab="combustivel" aria-selected="false">Combustível</button>
   <button role="tab" data-tab="materiais" aria-selected="false">Material</button>
+  <button role="tab" data-tab="servicos" aria-selected="false">Serviço</button>
   <button role="tab" data-tab="dispensa" aria-selected="false">Dispensa</button>
   <button role="tab" data-tab="config" aria-selected="false">Configurações</button>
 </nav>
@@ -252,6 +253,61 @@
     <p class="hint">Passe o mouse sobre o consumo para ver a memória de cálculo. "Comprar" vazio usa o valor sugerido (cinza); digite para trocar. Preços sem pesquisa recente vêm da última compra e precisam de cotação. Os vínculos marcados "confirmar" são suposições até a Divisão de Máquinas conferir.</p>
     <div class="cab"><div id="matResumo"></div>
       <div class="acoes"><button class="btn" id="btnMatDispensa">Criar dispensa com os itens marcados</button></div></div>
+  </div>
+</section>
+
+<!-- ═══════════ SERVIÇOS ═══════════ -->
+<section id="tab-servicos" class="hidden">
+  <div class="card">
+    <h2>Serviço de manutenção</h2>
+    <p class="hint">Escolha o equipamento e o serviço. O CHEMAQ monta o escopo a partir do manual do fabricante e acrescenta duas frentes de planejamento: as peças que costumam estar degradadas quando o equipamento é aberto e o painel elétrico de comando e alarme, que só aparece nos desenhos. Desmarque o que o orçamento não comportar, copie o pedido de orçamento para as empresas, lance as propostas e crie a dispensa: o DFD, o ETP, o TR e o Aviso saem prontos na aba Dispensa.</p>
+    <div class="row"><div><label for="sEquip">Equipamento</label><select id="sEquip"></select></div></div>
+    <div id="servFicha"></div>
+    <p class="vazio" id="servVazio">Escolha um equipamento acima.</p>
+  </div>
+
+  <div id="servCorpo" class="hidden">
+    <div class="card">
+      <div class="passo">Passo 1</div>
+      <h2>O que a Divisão de Máquinas constatou</h2>
+      <div id="servConstat" class="lida"></div>
+      <div><label for="sOutras">Outras constatações (uma por linha)</label><textarea id="sOutras" rows="2"></textarea></div>
+    </div>
+
+    <div class="card">
+      <div class="passo">Passo 2</div>
+      <h2>Escopo do serviço</h2>
+      <div class="tabela-wrap"><table class="tabela" id="servEscopo">
+        <thead><tr><th>Serviço</th><th>Peças e materiais incluídos</th><th>Manual</th></tr></thead>
+        <tbody></tbody></table></div>
+      <p class="hint" id="servFora"></p>
+      <div><label for="sExtras">Serviços a acrescentar (um por linha, com artigo: "a substituição de ...")</label><textarea id="sExtras" rows="2"></textarea></div>
+    </div>
+
+    <div class="card">
+      <div class="passo">Passo 3</div>
+      <div class="cab"><h2>Orçamentos</h2>
+        <div class="acoes"><button class="btn" id="btnPedidoOrc">Copiar pedido de orçamento</button>
+          <button class="btn ghost" id="btnVerPedido">Ver pedido</button></div></div>
+      <p class="hint">O pedido lista o escopo marcado e pede o preço de cada item, separando mão de obra e peças, para que as propostas possam ser comparadas. Lance abaixo o que as empresas responderem.</p>
+      <textarea id="sPedido" rows="14" class="hidden" readonly></textarea>
+      <div class="tabela-wrap"><table class="tabela" id="servOrc">
+        <thead><tr><th>Empresa</th><th>CNPJ</th><th>Data</th><th class="num">Mão de obra (R$)</th><th class="num">Peças (R$)</th><th class="num">Total (R$)</th><th class="num">Prazo (dias)</th><th></th></tr></thead>
+        <tbody></tbody></table></div>
+      <div class="acoes" style="margin:8px 0"><button class="btn ghost" id="btnOrcAdd">Lançar proposta</button></div>
+      <div class="row">
+        <div class="estreito"><label for="sCriterio">Valor estimado pela</label><select id="sCriterio">
+          <option value="media">Média</option><option value="mediana">Mediana</option><option value="menor">Menor preço</option></select></div>
+        <div id="servEstat" class="sub" style="align-self:end"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="passo">Passo 4</div>
+      <div class="cab"><h2>Dispensa</h2>
+        <div class="acoes"><button class="btn" id="btnServDispensa">Criar dispensa com este escopo</button></div></div>
+      <p class="hint">A dispensa abre na aba Dispensa com o equipamento, a constatação, o escopo, as peças, os critérios de aceitação, o CATSER sugerido e o valor das propostas. Lá você completa NUP, PAR e pesquisa de preços e baixa o DFD e os textos do Compras.gov.br.</p>
+    </div>
   </div>
 </section>
 
@@ -656,6 +712,7 @@
 <script src="js/pacotes.js"></script>
 <script src="js/materiais.js"></script>
 <script src="js/catmat.js"></script>
+<script src="js/servicos.js"></script>
 <script src="js/painel.js"></script>
 <script src="js/config.js"></script>
 <script src="js/navio.js"></script>

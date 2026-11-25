@@ -30,6 +30,7 @@ function renderTudo() {
   Comb.render();
   Dispensa.render();
   Materiais.render();
+  Servicos.render();
   Config.render();
 }
 
@@ -49,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
   Dist.carregar();
   Materiais.ligar();
   Catmat.ligar();
+  Servicos.ligar();
   Config.ligar();
 
   $('.tabs').addEventListener('click', e => {
