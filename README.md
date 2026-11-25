@@ -9,6 +9,7 @@ Abra `index.html` no navegador (ou publique pelo GitHub Pages). Não precisa ins
 - **Painel**: manutenções vencidas e a vencer, OS abertas, horímetros e ROB.
 - **Manutenção**: equipamentos com horímetro, rotinas por horas ou por calendário, ordens de serviço e histórico por equipamento. Concluir uma OS ligada a uma rotina reinicia a contagem dela.
 - **Combustível**: lançamento diário por motor (litros e horas), recebimentos e sondagem, ROB calculado, gráfico de consumo e L/h por motor. As horas lançadas podem ser somadas aos horímetros.
+- **Materiais**: filtros, impelidores, correias e baterias de uso comum, com histórico das dispensas de 2025 e 2026, onde cada um é usado, intervalo de troca do manual, consumo anual calculado pelas horas de uso, estoque a bordo e preço de referência. Marque os itens e as quantidades e a dispensa anual de material (vários itens) sai pronta na aba Dispensa.
 - **Dispensa**: a partir do equipamento e do que foi constatado, gera o DFD em Word e os textos do ETP, do TR e do Aviso no formato dos campos do Compras.gov.br, no padrão da última dispensa da Divisão de Máquinas. Há um pedido pronto para colar no claude.ai e trazer a redação técnica de volta.
 - **Configurações**: dados do navio, dados fixos da dispensa e backup.
 

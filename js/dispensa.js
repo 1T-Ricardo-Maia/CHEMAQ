@@ -93,8 +93,8 @@ const CAMPOS = {
     ['viabilidade', '15. Declaração de viabilidade']
   ],
   tr: [
-    ['requisitos', '1.1. Objeto e especificação'],
-    ['trTabela', 'Tabela do item'],
+    ['trObjeto', '1.1. Objeto e especificação'],
+    ['trTabela', 'Tabela dos itens'],
     ['trDivergencia', '1.2. Divergência com o catálogo'],
     ['trVigencia', '1.3. Vigência'],
     ['trPar', '2.2. Planejamento (PAR)'],
@@ -277,6 +277,8 @@ function textosPadrao(P) {
     'estabelecidas neste instrumento.';
   t.avisoItem = 'ITEM 1 – ' + itemTitulo + ' (' + catRef + ')' + (servicos.length ? ': compreende ' + enumerar(servicos) : '') +
     ', conforme o item 1.1 do Termo de Referência.';
+  t.trObjeto = t.requisitos;
+  if (Array.isArray(P.itens) && P.itens.length) return textosItens(P, t);
   t.avisoGerais = '1.1.2.1. Peças e materiais novos, de primeiro uso, originais ou tecnicamente equivalentes aos especificados pelo ' +
     'fabricante, vedado o emprego de peças remanufaturadas, recondicionadas ou usadas. A indicação do fabricante e do modelo destina-se ' +
     'apenas a identificar o equipamento existente a bordo, vedada a exigência de marca.\n1.1.2.2. Garantia mínima de ' + garantia + ' (' +
@@ -297,6 +299,8 @@ function textoFinal(P, chave, padrao) {
   const ed = (P.textos || {})[chave];
   if (ed && ed.texto) return ed.texto;
   if (chave === 'dfdJustificativa' && P.textos && P.textos.necessidade && P.textos.necessidade.texto) return P.textos.necessidade.texto;
+  /* dispensas antigas: o 1.1 do TR era o mesmo campo do ETP 4 */
+  if (chave === 'trObjeto' && !P.itens && P.textos && P.textos.requisitos && P.textos.requisitos.texto) return P.textos.requisitos.texto;
   return padrao[chave];
 }
 
@@ -376,8 +380,39 @@ const Dispensa = {
     DB.salvar();
   },
 
+  renderItens() {
+    const P = this.atual, box = $('#dispItens');
+    if (!box) return;
+    const tem = Array.isArray(P.itens) && P.itens.length;
+    box.classList.toggle('hidden', !tem);
+    if (!tem) return;
+    const total = P.itens.reduce((s, i) => s + (num(i.qtd) || 0) * (num(i.preco) || 0), 0);
+    $('#tabDispItens tbody').innerHTML = P.itens.map((i, n) => '<tr><td class="num">' + (n + 1) + '</td><td><b>' + esc(i.nome) +
+      '</b><div class="sub">CATMAT ' + esc(i.catmat) + ' · ' + esc(i.onde) + '</div></td>' +
+      '<td class="num"><input class="mini-in" type="number" min="1" step="1" data-item="' + n + '" data-campo="qtd" value="' + esc(i.qtd) + '"></td>' +
+      '<td class="num"><input class="mini-in larga" type="text" inputmode="decimal" data-item="' + n + '" data-campo="preco" value="' + esc(moeda(num(i.preco))) + '"></td>' +
+      '<td class="num">' + moeda((num(i.qtd) || 0) * (num(i.preco) || 0)) + '</td>' +
+      '<td class="botoes"><button class="mini del" data-tiraritem="' + n + '">Tirar</button></td></tr>').join('') +
+      '<tr class="grupo"><td></td><td>Total</td><td></td><td></td><td class="num">' + moeda(total) + '</td><td></td></tr>';
+  },
+
+  mudarItem(t) {
+    const P = this.atual, i = P.itens[Number(t.dataset.item)];
+    if (t.dataset.campo === 'qtd') i.qtd = Math.max(1, parseInt(t.value, 10) || 1);
+    else i.preco = num(String(t.value).replace(/\./g, '')) || 0;
+    this.totalItens();
+  },
+  totalItens() {
+    const P = this.atual;
+    const v = P.itens.reduce((s, i) => s + (num(i.qtd) || 0) * (num(i.preco) || 0), 0);
+    P.valor = v.toFixed(2).replace('.', ','); P.qtd = String(P.itens.length);
+    const f = $('#formDisp'); if (f.elements.valor) f.elements.valor.value = P.valor;
+    this.gravar();
+  },
+
   renderDocs() {
     const P = this.atual; if (!P) return;
+    this.renderItens();
     const pad = textosPadrao(P);
     $$('.docAbas [data-doc]').forEach(b => b.setAttribute('aria-selected', b.dataset.doc === this.doc));
     $('#dispDocs').innerHTML = CAMPOS[this.doc].map(([k, rot]) => {
@@ -539,6 +574,7 @@ const Dispensa = {
       espera = setTimeout(() => this.gravar(), 400);
     });
     f.addEventListener('submit', e => e.preventDefault());
+    $('#tabDispItens').addEventListener('change', e => { if (e.target.dataset.item != null) this.mudarItem(e.target); });
 
     $('#tab-dispensa').addEventListener('click', e => {
       const b = e.target.closest('button'); if (!b) return;
@@ -562,6 +598,10 @@ const Dispensa = {
       else if (d.editar) this.editar(d.editar);
       else if (d.salvartexto) this.salvarTexto(d.salvartexto);
       else if (d.restaurar) { delete this.atual.textos[d.restaurar]; this.gravar(); }
+      else if (d.tiraritem) {
+        if (this.atual.itens.length === 1) { toast('A dispensa precisa de pelo menos um item.', true); return; }
+        this.atual.itens.splice(Number(d.tiraritem), 1); this.totalItens();
+      }
     });
   }
 };
