@@ -196,7 +196,7 @@ function textosPadrao(P) {
   t.etpValor = 'Valor (R$): ' + (valor != null ? moeda(valor) : '[valor]') + '\n\nO custo máximo estimado da contratação é de ' + valorTxt + '.';
 
   t.parcelamento = 'Adota-se o critério de julgamento de menor preço por item, em observância ao princípio do parcelamento previsto no ' +
-    'art. 40, § 2º, e no art. 47, inciso II, da Lei nº 14.133/2021, segundo o qual o objeto deve ser dividido em tantos itens quantos se ' +
+    'art. 40, inciso V, alínea "b", e § 2º, da Lei nº 14.133/2021, segundo o qual o objeto deve ser dividido em tantos itens quantos se ' +
     'comprovem técnica e economicamente viáveis, de modo a ampliar a competitividade. Analisada a divisão, verificou-se que o ' +
     (material ? 'objeto' : 'serviço') + ' constitui um único item, porque incide sobre o mesmo equipamento, na mesma janela de ' +
     'indisponibilidade, e a divisão em itens distintos exporia o equipamento à atuação simultânea de executores diferentes, ' +
@@ -398,8 +398,16 @@ const Dispensa = {
 
   mudarItem(t) {
     const P = this.atual, i = P.itens[Number(t.dataset.item)];
-    if (t.dataset.campo === 'qtd') i.qtd = Math.max(1, parseInt(t.value, 10) || 1);
-    else i.preco = num(String(t.value).replace(/\./g, '')) || 0;
+    if (t.dataset.campo === 'qtd') {
+      const q = parseInt(t.value, 10);
+      if (!(q >= 1)) { toast('Quantidade mínima é 1. Para retirar o item, use "Tirar".', true); t.value = i.qtd; return; }
+      if (i.qtdCalc != null && q !== i.qtdCalc) i.ajuste = q; else delete i.ajuste;
+      i.qtd = q;
+    } else {
+      const v = numBR(t.value);
+      if (v == null) { toast('Preço inválido. Use o formato 1.317,86.', true); return; }
+      i.preco = v;
+    }
     this.totalItens();
   },
   totalItens() {
