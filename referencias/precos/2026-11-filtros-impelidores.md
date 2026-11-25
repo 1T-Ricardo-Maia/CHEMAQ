@@ -41,4 +41,4 @@ UASG 784515 = AvHoFlu Rio Tocantins; 784516 = AvHoFlu Rio Xingu; 784514 = NHiB (
 
 ## Como refazer este levantamento
 
-A API não aceita chamadas a partir do site do CHEMAQ (bloqueio de CORS), então o site guarda estes números em `js/sobressalentes.js`. Para atualizar, abra no navegador o endereço acima trocando o CATMAT, filtre pelas UASG 7845xx e pela marca, e corrija os preços no site (aba Dispensa, card "Dispensa anual de sobressalentes").
+A API não aceita chamadas a partir do site do CHEMAQ (bloqueio de CORS), então o site guarda estes números em `js/materiais.js`. Para atualizar, abra no navegador o endereço acima trocando o CATMAT, filtre pelas UASG 7845xx e pela marca, e corrija os preços no site (aba Material, coluna de preço).

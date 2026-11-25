@@ -179,7 +179,7 @@
   <div class="card">
     <div class="cab"><h2>Materiais comuns da máquina</h2>
       <div class="acoes"><button class="btn ghost" id="btnMatRotinas">Criar rotinas de troca no plano</button></div></div>
-    <p class="hint">Filtros, impelidores, correias e baterias que precisam estar sempre a bordo a pronto emprego. Cada material traz o histórico das últimas dispensas, onde é usado e o intervalo de troca do manual. Informe as horas de uso por ano e o estoque a bordo: o CHEMAQ calcula o consumo do ano, guarda uma troca completa de reserva e sugere quanto comprar. Marque os itens e as quantidades e crie a dispensa: o DFD, o ETP, o TR e o Aviso saem prontos na aba Dispensa, no mesmo gerador usado para serviços.</p>
+    <p class="hint">Filtros, impelidores, correias e baterias que precisam estar sempre a bordo a pronto emprego. Cada material traz o histórico das últimas dispensas, onde é usado e o intervalo de troca do manual. Informe as horas de uso por ano (os padrões, 400 h por MCP e 4.000 h por MCA, saem do diesel consumido de nov/2025 a out/2026; confira pelos horímetros) e o estoque a bordo: o CHEMAQ calcula o consumo do ano, guarda uma troca completa de reserva e sugere quanto comprar. Marque os itens e as quantidades e crie a dispensa: o DFD, o ETP, o TR e o Aviso saem prontos na aba Dispensa, no mesmo gerador usado para serviços.</p>
     <form id="formMatCfg" class="row" autocomplete="off">
       <div class="estreito"><label>MCP: horas por ano (cada)</label><input type="number" min="0" step="10" name="hMCP"></div>
       <div class="estreito"><label>MCA: horas por ano (cada)</label><input type="number" min="0" step="10" name="hMCA"></div>
@@ -187,6 +187,7 @@
         <option value="I">Categoria I (1D/1DS, serviço leve): A 100 h, B 200 h, C 400 h</option>
         <option value="II">Categoria II (1B, serviço médio): A 150 h, B 300 h, C 600 h</option>
         <option value="III">Categoria III (1A, serviço pesado): A 250 h, B 500 h, C 1.000 h</option></select></div>
+      <div class="estreito"><label>Ano da compra</label><input type="number" min="2025" step="1" name="anoAlvo"></div>
       <div class="estreito check"><label><input type="checkbox" name="reserva"> Manter uma troca completa de reserva</label></div>
     </form>
   </div>
