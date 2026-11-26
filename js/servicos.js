@@ -44,6 +44,19 @@ const CATSER = {
   2720: 'manutenção de instrumentos elétricos'
 };
 
+/* Motor elétrico: por decisão da Divisão de Máquinas (26/11/2026), o escopo
+ * padrão é o recondicionamento completo, como se o motor estivesse queimado,
+ * com rolamentos ruins e eixo desbalanceado. "de" = com artigo ("do motor ..."). */
+function motorEletrico(de) {
+  return [
+    ['A', 'o recondicionamento completo ' + de + ', considerado queimado: desmontagem, limpeza, rebobinamento total do estator com fio de cobre esmaltado de classe térmica igual ou superior à original, impregnação com verniz e cura em estufa', 'fio de cobre esmaltado, verniz e material isolante'],
+    ['A', 'a substituição de todos os rolamentos ' + de, 'rolamentos'],
+    ['A', 'a verificação do eixo e dos assentos de rolamento ' + de + ', com recuperação por metalização e usinagem quando fora de medida, e o balanceamento dinâmico do conjunto rotor e eixo', ''],
+    ['A', 'a substituição dos retentores, da ventoinha, das juntas e dos terminais da caixa de ligação ' + de + ' e a pintura externa', 'retentores, juntas e terminais'],
+    ['T', 'os ensaios ' + de + ' recondicionado, com laudo: resistência de isolamento e índice de polarização, resistência ôhmica dos enrolamentos, corrente e equilíbrio de fases em vazio e em carga e medição de vibração']
+  ];
+}
+
 /* Tarefa: [frente, texto (com artigo, para entrar na frase), material incluído (opcional), referência do manual (opcional)] */
 const SERV_FAMILIAS = [
   {
@@ -287,7 +300,8 @@ const SERV_FAMILIAS = [
         ['A', 'a substituição das bobinas solenoides e do conjunto de vedação da válvula direcional (CETOP 3)', 'solenoides e conjunto de vedação da válvula direcional'],
         ['A', 'a substituição da válvula de retenção dupla e das válvulas de retenção da bomba manual', 'válvulas de retenção'],
         ['A', 'a revisão das válvulas de alívio dos cilindros, com substituição do conjunto de vedação', 'conjunto de vedação das válvulas de alívio'],
-        ['A', 'o rebobinamento do estator e a substituição dos rolamentos dos motores elétricos de 3 HP das unidades de força, com revisão das resistências de aquecimento', 'rolamentos e material de rebobinamento'],
+        ...motorEletrico('dos motores elétricos de 3 HP das unidades de força'),
+        ['A', 'a revisão das resistências de aquecimento anticondensação dos motores', 'resistências de aquecimento'],
         ['A', 'a substituição do cartucho de palhetas, dos rolamentos e das vedações das bombas hidráulicas', 'kit de reparo da bomba de palhetas'],
         ['A', 'a substituição do elemento elástico do acoplamento motor/bomba', 'elemento elástico do acoplamento'],
         ['A', 'a substituição dos conjuntos de vedação dos cilindros hidráulicos (gaxetas, raspadores e anéis O-ring)', 'conjuntos de vedação dos cilindros'],
@@ -322,8 +336,8 @@ const SERV_FAMILIAS = [
         ['M', 'a medição da resistência de isolamento do motor elétrico', ''],
         ['A', 'a substituição do selo mecânico', 'selo mecânico'],
         ['A', 'a substituição do rotor (impelidor) e dos anéis de desgaste', 'rotor e anéis de desgaste'],
-        ['A', 'a substituição dos rolamentos da bomba e do motor elétrico', 'rolamentos'],
-        ['A', 'o rebobinamento do estator do motor elétrico, se a resistência de isolamento estiver abaixo do mínimo', 'material de rebobinamento'],
+        ['A', 'a substituição dos rolamentos da bomba', 'rolamentos da bomba'],
+        ...motorEletrico('do motor elétrico'),
         ['A', 'a substituição das juntas e anéis O-ring', 'juntas e anéis O-ring'],
         ['B', 'a revisão da chave de partida: contator, relé térmico, botoeiras, fusíveis e lâmpadas de sinalização', ''],
         ['B', 'a aferição do pressostato ou da chave de nível que comanda a bomba, quando houver', ''],
@@ -350,7 +364,7 @@ const SERV_FAMILIAS = [
         ['A', 'a substituição das engrenagens e das buchas desgastadas', 'engrenagens e buchas'],
         ['A', 'a substituição do selo mecânico e das vedações', 'selo mecânico e vedações'],
         ['A', 'a revisão e a regulagem da válvula de alívio incorporada', ''],
-        ['A', 'a substituição dos rolamentos do motor elétrico e o rebobinamento, se necessário', 'rolamentos'],
+        ...motorEletrico('do motor elétrico'),
         ['B', 'a revisão da chave de partida: contator, relé térmico, botoeiras e sinalização', ''],
         ['T', 'o teste de vazão e de pressão no ponto nominal de placa, sem vazamentos']
       ],
@@ -376,7 +390,8 @@ const SERV_FAMILIAS = [
         ['M', 'a verificação dos drenos de condensado e da tensão da correia', ''],
         ['A', 'a substituição das válvulas de admissão e de descarga de todos os estágios', 'jogo de válvulas dos estágios'],
         ['A', 'a substituição dos anéis de pistão e das vedações', 'anéis e vedações'],
-        ['A', 'a substituição dos rolamentos do compressor e do motor elétrico', 'rolamentos'],
+        ['A', 'a substituição dos rolamentos do compressor', 'rolamentos do compressor'],
+        ...motorEletrico('do motor elétrico'),
         ['B', 'a revisão do disjuntor do motor, da chave de partida, do pressostato de pressão final e do contador de horas', ''],
         ['B', 'a aferição dos manômetros', ''],
         ['T', 'a análise da qualidade do ar respirável produzido por laboratório, conforme a norma EN 12021, com laudo'],
@@ -400,9 +415,8 @@ const SERV_FAMILIAS = [
       tarefas: [
         ['M', 'a limpeza do rotor, da carcaça e das grelhas', ''],
         ['M', 'a medição da resistência de isolamento do motor elétrico', ''],
-        ['A', 'a substituição dos rolamentos do motor elétrico', 'rolamentos'],
-        ['A', 'o rebobinamento do estator, se necessário', 'material de rebobinamento'],
-        ['A', 'o balanceamento dinâmico do rotor', ''],
+        ...motorEletrico('do motor elétrico'),
+        ['A', 'o balanceamento dinâmico da hélice ou do rotor do ventilador', ''],
         ['B', 'a revisão da chave de partida: contator, relé térmico, botoeiras e sinalização', ''],
         ['T', 'o teste de funcionamento com medição de corrente e de vibração']
       ],
@@ -448,9 +462,9 @@ const SERV_FAMILIAS = [
       tarefas: [
         ['M', 'a troca do óleo do redutor e a lubrificação dos mancais e engrenagens abertas', 'óleo e graxa'],
         ['M', 'a medição da resistência de isolamento do motor elétrico', ''],
-        ['A', 'a substituição dos rolamentos, retentores e vedações do redutor e do motor', 'rolamentos e retentores'],
+        ['A', 'a substituição dos rolamentos, retentores e vedações do redutor', 'rolamentos e retentores do redutor'],
         ['A', 'a substituição das lonas ou pastilhas do freio e a regulagem do freio', 'lonas/pastilhas do freio'],
-        ['A', 'o rebobinamento do motor elétrico, se necessário', ''],
+        ...motorEletrico('do motor elétrico'),
         ['A', 'a substituição do cabo de aço, se reprovado na inspeção', 'cabo de aço'],
         ['B', 'a revisão do painel de comando: contatores reversores, relé térmico, botoeiras, chaves de fim de curso e sinalização', ''],
         ['T', 'o teste de carga e de funcionamento, com verificação do freio']
