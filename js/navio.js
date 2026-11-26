@@ -28,9 +28,9 @@ const EQUIPAMENTOS_NAVIO = [
     '50 HP, partida elétrica. Fabricante não consta do memorial. Memorial 13.5.'],
 
   ['BML-1', 'Bomba hidráulica nº 1 da máquina do leme', 'Governo', 'Sperry Marine', 'VMBR-100', 'Compartimento da Máquina do Leme', false,
-    'Máquina do leme eletro-hidráulica, 5,7 kN·m. Memorial 11.1.'],
+    'Máquina do leme eletro-hidráulica, 5,7 kN·m. Sistema montado pela Vision Marine (manual de 2012 e desenhos VM-1xx). Memorial 11.1.'],
   ['BML-2', 'Bomba hidráulica nº 2 da máquina do leme (reserva)', 'Governo', 'Sperry Marine', 'VMBR-100', 'Compartimento da Máquina do Leme', false,
-    'Bomba reserva. Memorial 11.1.'],
+    'Bomba reserva. Sistema montado pela Vision Marine (manual de 2012 e desenhos VM-1xx). Memorial 11.1.'],
   ['MOL', 'Molinete elétrico', 'Casco e convés', 'Navalsul', '', 'Convés', false,
     '10 m/min; amarra de 100 m de cabo de aço 6x7 AA. Memorial 12.1.'],
   ['TUR-AV', 'Turco portátil de vante', 'Casco e convés', '', '', 'Convés 1 – AV BE', false,
