@@ -219,3 +219,13 @@ dialog::backdrop{background:rgba(15,42,40,.45)}
 .alerta{color:var(--alert);font-size:12px}
 #matResumo{font-size:14px;line-height:1.6}
 .tabela tr.fora td{opacity:.45}
+
+/* Serviços */
+.ficha{display:grid;gap:4px;margin:4px 0 12px;padding:10px 12px;border-left:3px solid var(--brass);background:#FBF7EE}
+.pacotes button{text-transform:none;letter-spacing:.02em;font-size:13px}
+.mini-in.texto{width:100%;min-width:120px;text-align:left;font-family:var(--body)}
+#servConstat label.check{font-weight:400}
+#sPedido{width:100%;font-family:var(--mono);font-size:12px;margin-bottom:10px}
+#servEscopo td:first-child{min-width:280px}
+#servEscopo label.selmat{text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink);font-weight:400;margin:0}
+#servOrc input[type=date]{width:140px}
