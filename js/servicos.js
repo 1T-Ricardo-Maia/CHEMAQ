@@ -265,9 +265,9 @@ const SERV_FAMILIAS = [
     }]
   },
   {
-    id: 'leme', nome: 'Máquina do leme eletro-hidráulica (Vision Marine)',
+    id: 'leme', nome: 'Máquina do leme eletro-hidráulica (bombas Sperry, sistema Vision Marine)',
     casa: e => /^BML/i.test(e.tag) || /leme/i.test(e.nome),
-    identificacao: 'Vision Marine, do tipo eletro-hidráulico de fluxo simples, de 5,7 kN·m, pressão de trabalho de 70 bar, válvula de segurança regulada a 80 bar, unidades de força com motor elétrico de 3 HP (2,3 kW) e bomba de palhetas, tanque de 70 L, dois cilindros de dupla ação e barra de ligação (tie-bar)',
+    identificacao: 'Sperry Marine VMBR-100, sistema montado pela Vision Marine, do tipo eletro-hidráulico de fluxo simples, de 5,7 kN·m, pressão de trabalho de 70 bar, válvula de segurança regulada a 80 bar, unidades de força com motor elétrico de 3 HP (2,3 kW) e bomba de palhetas, tanque de 70 L, dois cilindros de dupla ação e barra de ligação (tie-bar)',
     alvo: 'a máquina do leme (unidades de força BML-1 e BML-2)',
     funcao: 'é o único meio de governo da embarcação',
     area: 'manutenção de sistemas eletro-hidráulicos de governo', catser: ['16306', '2402', '2615', '1970'],
