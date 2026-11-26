@@ -23,6 +23,7 @@
   <button role="tab" data-tab="painel" aria-selected="true">Painel</button>
   <button role="tab" data-tab="manutencao" aria-selected="false">Manutenção</button>
   <button role="tab" data-tab="combustivel" aria-selected="false">Combustível</button>
+  <button role="tab" data-tab="materiais" aria-selected="false">Material</button>
   <button role="tab" data-tab="dispensa" aria-selected="false">Dispensa</button>
   <button role="tab" data-tab="config" aria-selected="false">Configurações</button>
 </nav>
@@ -172,6 +173,34 @@
   </div>
 </section>
 
+<!-- ═══════════ MATERIAIS ═══════════ -->
+<section id="tab-materiais" class="hidden">
+  <div class="card">
+    <div class="cab"><h2>Materiais comuns da máquina</h2>
+      <div class="acoes"><button class="btn ghost" id="btnMatRotinas">Criar rotinas de troca no plano</button></div></div>
+    <p class="hint">Filtros, impelidores, correias e baterias que precisam estar sempre a bordo a pronto emprego. Cada material traz o histórico das últimas dispensas, onde é usado e o intervalo de troca do manual. Informe as horas de uso por ano (os padrões, 400 h por MCP e 4.000 h por MCA, saem do diesel consumido de nov/2025 a out/2026; confira pelos horímetros) e o estoque a bordo: o CHEMAQ calcula o consumo do ano, guarda uma troca completa de reserva e sugere quanto comprar. Marque os itens e as quantidades e crie a dispensa: o DFD, o ETP, o TR e o Aviso saem prontos na aba Dispensa, no mesmo gerador usado para serviços.</p>
+    <form id="formMatCfg" class="row" autocomplete="off">
+      <div class="estreito"><label>MCP: horas por ano (cada)</label><input type="number" min="0" step="10" name="hMCP"></div>
+      <div class="estreito"><label>MCA: horas por ano (cada)</label><input type="number" min="0" step="10" name="hMCA"></div>
+      <div><label>Regime do MTU 6R 199 (Tabela de Manutenção)</label><select name="catMtu">
+        <option value="I">Categoria I (1D/1DS, serviço leve): A 100 h, B 200 h, C 400 h</option>
+        <option value="II">Categoria II (1B, serviço médio): A 150 h, B 300 h, C 600 h</option>
+        <option value="III">Categoria III (1A, serviço pesado): A 250 h, B 500 h, C 1.000 h</option></select></div>
+      <div class="estreito"><label>Ano da compra</label><input type="number" min="2025" step="1" name="anoAlvo"></div>
+      <div class="estreito check"><label><input type="checkbox" name="reserva"> Manter uma troca completa de reserva</label></div>
+    </form>
+  </div>
+  <div class="card">
+    <div class="tabela-wrap"><table class="tabela" id="tabMat">
+      <thead><tr><th>Material · histórico</th><th>Onde · intervalo</th><th class="num">Consumo/ano</th><th class="num">Estoque a bordo</th>
+        <th class="num">Comprar</th><th class="num">Preço unit. (R$)</th><th class="num">Total (R$)</th></tr></thead>
+      <tbody></tbody></table></div>
+    <p class="hint">Passe o mouse sobre o consumo para ver a memória de cálculo. "Comprar" vazio usa o valor sugerido (cinza); digite para trocar. Preços sem pesquisa recente vêm da última compra e precisam de cotação. Os vínculos marcados "confirmar" são suposições até a Divisão de Máquinas conferir.</p>
+    <div class="cab"><div id="matResumo"></div>
+      <div class="acoes"><button class="btn" id="btnMatDispensa">Criar dispensa com os itens marcados</button></div></div>
+  </div>
+</section>
+
 <!-- ═══════════ DISPENSA ═══════════ -->
 <section id="tab-dispensa" class="hidden">
   <div class="card" id="cardDispLista">
@@ -185,6 +214,14 @@
   </div>
 
   <div id="dispEditor" class="hidden">
+    <div class="card hidden" id="dispItens">
+      <div class="passo">Itens</div>
+      <h2>Itens da dispensa</h2>
+      <p class="hint">Dispensa de material com vários itens, criada na aba Materiais. Ajuste a quantidade e o preço aqui; os textos e o valor total se atualizam. Os campos de diagnóstico do Passo 2 não são usados neste tipo.</p>
+      <div class="tabela-wrap"><table class="tabela" id="tabDispItens">
+        <thead><tr><th class="num">Item</th><th>Material</th><th class="num">Qtd</th><th class="num">Unitário (R$)</th><th class="num">Total (R$)</th><th></th></tr></thead>
+        <tbody></tbody></table></div>
+    </div>
     <form id="formDisp" autocomplete="off">
       <div class="card">
         <div class="passo">Passo 1</div>
@@ -493,6 +530,7 @@
 <script src="js/combustivel.js"></script>
 <script src="js/docx.js"></script>
 <script src="js/dispensa.js"></script>
+<script src="js/materiais.js"></script>
 <script src="js/painel.js"></script>
 <script src="js/config.js"></script>
 <script src="js/navio.js"></script>

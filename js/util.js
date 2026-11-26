@@ -42,6 +42,15 @@ function num(v) {
   const n = Number(String(v).replace(',', '.'));
   return Number.isFinite(n) ? n : null;
 }
+/* Número digitado no padrão brasileiro: "1.317,86", "1317,86", "1317.86" ou "22.75". */
+function numBR(v) {
+  if (v === '' || v == null) return null;
+  let s = String(v).trim().replace(/\s|R\$/g, '');
+  if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+  else if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, '');
+  const n = Number(s);
+  return Number.isFinite(n) ? n : null;
+}
 function fmt(n, casas) {
   if (n == null || !Number.isFinite(n)) return '—';
   return n.toLocaleString('pt-BR', { minimumFractionDigits: casas || 0, maximumFractionDigits: casas || 0 });

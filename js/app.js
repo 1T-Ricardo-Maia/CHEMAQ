@@ -29,6 +29,7 @@ function renderTudo() {
   Manut.render();
   Comb.render();
   Dispensa.render();
+  Materiais.render();
   Config.render();
 }
 
@@ -43,6 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
   Manut.ligar();
   Comb.ligar();
   Dispensa.ligar();
+  Materiais.ligar();
   Config.ligar();
 
   $('.tabs').addEventListener('click', e => {
