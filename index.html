@@ -9,6 +9,11 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="css/style.css">
 <link rel="icon" type="image/svg+xml" href="img/bode.svg">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="img/app/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="CHEMAQ">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#03060A">
 <meta name="color-scheme" content="dark">
 </head>
@@ -61,7 +66,8 @@
 </svg>
   </div>
   <div class="plate">CHEMAQ<small><span id="nomeNavio">Departamento de Máquinas</span></small></div>
-  <div class="clock" id="relogio" aria-live="off"><b>--:--</b>—</div>
+  <div class="topoDir"><button class="btn rapido" id="btnSondTopo" title="Colar a mensagem de sondagem do WhatsApp">+ Sondagem</button>
+    <div class="clock" id="relogio" aria-live="off"><b>--:--</b>—</div></div>
 </header>
 
 <nav class="tabs" role="tablist" aria-label="Módulos">
@@ -78,6 +84,7 @@
 
 <!-- ═══════════ PAINEL ═══════════ -->
 <section id="tab-painel">
+  <div class="card warn hidden avisoBackup" id="avisoBackup"></div>
   <div class="card dest hidden" id="cardBoasVindas">
     <h2>Primeiros passos</h2>
     <p>O CHEMAQ ainda está vazio. Comece cadastrando os equipamentos do navio (motores, geradores, redutoras e motores elétricos do memorial descritivo), depois as rotinas do plano de manutenção. Para ver o site funcionando antes, carregue os dados de exemplo.</p>
@@ -199,14 +206,20 @@
       <div class="cab"><h2>Planejar comissão</h2>
         <div class="acoes"><button class="mini" id="btnLimparPlano">Limpar</button></div></div>
       <div class="tabela-wrap"><table class="tabela plano">
-        <thead><tr><th>Trecho</th><th class="num">Milhas</th><th class="num">L/nm</th><th class="num">Litros</th><th></th></tr></thead>
+        <thead><tr><th>Trecho · consumo</th><th class="num">Milhas</th><th class="num">L/nm</th><th class="num">Litros</th><th></th></tr></thead>
         <tbody id="planoPernas"></tbody></table></div>
       <button class="mini" id="btnAddPerna">+ trecho</button>
       <form id="formPlano" class="row" style="margin-top:12px">
-        <div><label for="pDias">Dias parado</label><input type="number" step="any" min="0" id="pDias" name="diasPorto"></div>
-        <div><label for="pLdia">Consumo parado (L/dia)</label><input type="number" step="any" min="0" id="pLdia" name="litrosDia"></div>
+        <div><label for="pDiasC">Dias parado em comissão</label><input type="number" step="any" min="0" id="pDiasC" name="diasComissao"></div>
+        <div><label for="pDias">Dias parado na base</label><input type="number" step="any" min="0" id="pDias" name="diasPorto"></div>
+        <div class="hidden"><label for="pLdia">Consumo na base (L/dia)</label><input type="number" step="any" min="0" id="pLdia" name="litrosDia"></div>
         <div><label for="pRes">Margem (%)</label><input type="number" step="any" min="0" id="pRes" name="reserva"></div>
       </form>
+      <details class="secao">
+        <summary><span><b>Consumo por região</b><small>Valores de planejamento; o “Automático” escolhe a região pelo trecho</small></span></summary>
+        <div class="row" id="planoRegioes"></div>
+        <p class="hint">Médias de nov/2026 (CONTROLE CLG): Belém–Marajó 7,6 L/nm medido, planejado 8,5; Amazonas subindo 11 a 13; parado na base 125 a 170 L/dia; parado em comissão cerca de 430 L/dia. Apague um valor para usar a média medida.</p>
+      </details>
       <div id="planoResumo" class="planoResumo"></div>
       <p class="aviso hidden" id="planoAviso"></p>
     </div>
@@ -226,8 +239,8 @@
       <div class="acoes"><button class="btn ghost" id="btnMatRotinas">Criar rotinas de troca no plano</button></div></div>
     <p class="hint">Filtros, impelidores, correias e baterias que precisam estar sempre a bordo a pronto emprego. Cada material traz o histórico das últimas dispensas, onde é usado e o intervalo de troca do manual. Informe as horas de uso por ano (os padrões, 400 h por MCP e 4.000 h por MCA, saem do diesel consumido de nov/2025 a out/2026; confira pelos horímetros) e o estoque a bordo: o CHEMAQ calcula o consumo do ano, guarda uma troca completa de reserva e sugere quanto comprar. Marque os itens e as quantidades e crie a dispensa: o DFD, o ETP, o TR e o Aviso saem prontos na aba Dispensa, no mesmo gerador usado para serviços.</p>
     <form id="formMatCfg" class="row" autocomplete="off">
-      <div class="estreito"><label>MCP: horas por ano (cada)</label><input type="number" min="0" step="10" name="hMCP"></div>
-      <div class="estreito"><label>MCA: horas por ano (cada)</label><input type="number" min="0" step="10" name="hMCA"></div>
+      <div class="estreito"><label>MCP: horas por ano (cada)</label><input type="number" min="0" step="10" name="hMCP"><div class="sub" id="medMCP"></div></div>
+      <div class="estreito"><label>MCA: horas por ano (cada)</label><input type="number" min="0" step="10" name="hMCA"><div class="sub" id="medMCA"></div></div>
       <div><label>Regime do MTU 6R 199 (Tabela de Manutenção)</label><select name="catMtu">
         <option value="I">Categoria I (1D/1DS, serviço leve): A 100 h, B 200 h, C 400 h</option>
         <option value="II">Categoria II (1B, serviço médio): A 150 h, B 300 h, C 600 h</option>
@@ -317,8 +330,6 @@
     <div class="cab"><h2>Dispensas eletrônicas <span class="n" id="nDisp">0</span></h2>
       <div class="acoes"><button class="btn" id="btnNovaDisp">Nova dispensa</button></div></div>
     <p class="hint">Cada dispensa guardada pode ser reaberta para refazer os documentos ou duplicada como base de uma nova. O gerador monta as 11 peças do processo (capa, autuação, DFD, ETP, atos, autorização, mapa de riscos, declaração orçamentária, Aviso e TR) no padrão da Dispensa 26/2026. Os pacotes de serviço por equipamento ficam em <code>dados/pacotes.json</code> e crescem a cada dispensa salva como pacote.</p>
-    <div class="acoes"><button class="btn ghost" id="btnExpPacotes">Exportar pacotes (.json)</button>
-      <label class="btn ghost arquivo">Importar pacotes<input type="file" id="inPacotes" accept=".json,application/json"></label></div>
     <div class="tabela-wrap"><table class="tabela" id="tabDisp">
       <thead><tr><th>Processo</th><th>Objeto</th><th class="num">Valor</th><th>Atualizado</th><th></th></tr></thead>
       <tbody></tbody></table></div>
@@ -331,6 +342,8 @@
         <div class="acoes"><button class="btn ghost" id="btnFecharDisp" type="button">Fechar</button></div></div>
       <div class="prog"><span class="rot">Preenchimento</span><b id="dispProgN">0/0 · 0%</b></div>
       <div class="barra"><i id="dispProgBarra"></i></div>
+      <div class="falta"><label class="check"><input type="checkbox" id="dispSoFalta"> Modo rápido: mostrar só o que falta preencher</label>
+        <div id="dispFalta" class="chips"></div></div>
       <p class="hint">Um formulário só alimenta as 11 peças do processo, na ordem dos autos: capa, autuação, DFD, ETP, ato de aprovação do ETP, autorização de abertura, mapa de riscos, declaração orçamentária, aviso, TR e ato de aprovação do TR. Os dados fixos (OM, UASG, ordenador, responsável) vêm de Configurações.</p>
     </div>
 
@@ -449,7 +462,7 @@
       </div>
     </form>
 
-    <div class="card">
+    <div class="card" id="cardIA">
       <div class="passo">Passo 3 · opcional</div>
       <h2>Redação com IA</h2>
       <p class="hint">Os textos já saem prontos a partir dos campos acima. Para uma redação técnica mais completa, copie o pedido, cole no claude.ai junto com as páginas do manual e traga a resposta de volta. Não precisa de chave de API.</p>
@@ -541,14 +554,31 @@
     <div id="listaModelos"></div>
   </div>
   <div class="card">
+    <h2>Instalar no celular</h2>
+    <p class="hint">O CHEMAQ pode ficar na tela inicial do celular como um aplicativo, com o atalho “Colar sondagem”. No <b>Android</b> (Chrome): menu ⋮ › Instalar app. No <b>iPhone</b> (Safari): botão Compartilhar › Adicionar à Tela de Início. Os dados do celular são separados dos do computador: use Restaurar backup para levar os dados.</p>
+    <div class="acoes"><button class="btn hidden" id="btnInstalar">Instalar o CHEMAQ</button></div>
+  </div>
+  <div class="card">
     <h2>Backup</h2>
-    <p class="hint">Nesta versão os dados ficam guardados <b>neste navegador</b>. Exporte um backup com frequência e guarde no computador ou no pendrive. Para levar os dados a outro computador, importe o arquivo lá.</p>
+    <p class="hint">Os dados ficam guardados <b>neste navegador</b>. No Chrome ou no Edge do computador, o CHEMAQ grava o backup sozinho numa pasta escolhida uma vez. Escolha a pasta do <b>Google Drive para computador</b> (por exemplo, Meu Drive › CHEMAQ) e o arquivo vai para o Drive sem mais nada. A cada mudança ele regrava <span class="mono">chemaq-backup.json</span> e guarda uma cópia por dia em <span class="mono">diarios/</span>.</p>
+    <p class="hint" id="estadoBackup"></p>
+    <p class="hint hidden" id="semPastaBackup">Este navegador não grava em pasta: baixe o backup e guarde no Drive. O Painel avisa quando passar de 7 dias sem backup.</p>
     <div class="acoes">
-      <button class="btn" id="btnBackup">Exportar backup</button>
-      <label class="btn ghost arquivo">Importar backup<input type="file" id="inBackup" accept=".json,application/json"></label>
+      <button class="btn" id="btnBackupPasta" data-backup="pasta">Backup automático numa pasta</button>
+      <button class="btn hidden" id="btnBackupRetomar" data-backup="reativar">Retomar</button>
+      <button class="btn ghost hidden" id="btnBackupDesligar" data-backup="desligar">Desligar automático</button>
+      <button class="btn ghost" id="btnBackup">Baixar backup agora</button>
+      <label class="btn ghost arquivo">Restaurar backup<input type="file" id="inBackup" accept=".json,application/json"></label>
       <button class="btn ghost perigo" id="btnApagar">Apagar todos os dados</button>
     </div>
     <p class="hint" id="infoBackup"></p>
+    <p class="hint">Para usar em outro computador ou no celular, abra o site lá e use <b>Restaurar backup</b> com o arquivo <span class="mono">chemaq-backup.json</span> do Drive.</p>
+  </div>
+  <div class="card">
+    <h2>Pacotes de serviço para o repositório</h2>
+    <p class="hint">Os pacotes que você salva numa dispensa já vão no backup. Exporte só quando quiser que um pacote passe a valer para todos, no arquivo <span class="mono">dados/pacotes.json</span> do repositório.</p>
+    <div class="acoes"><button class="btn ghost" id="btnExpPacotes">Exportar pacotes (.json)</button>
+      <label class="btn ghost arquivo">Importar pacotes<input type="file" id="inPacotes" accept=".json,application/json"></label></div>
   </div>
 </section>
 
@@ -647,8 +677,9 @@
 <dialog id="dlgSond" aria-labelledby="dlgSondTit">
   <form method="dialog">
     <h3 id="dlgSondTit">Colar sondagem</h3>
-    <label for="txtSond">Mensagem do WhatsApp (pode colar várias de uma vez)</label>
-    <textarea id="txtSond" rows="9" placeholder="*Sondagem*&#10;30/09/2026&#10;Dia - 03&#10;*Anterior* 20.019&#10;*Atual* 19.534&#10;Be ▶️2.03▶️10.082&#10;Bb▶️1.90▶️9.452&#10;Tanque serviço ▶️600&#10;*Consumo* : 485&#10;Traslado: Breves x Ponta Negra"></textarea>
+    <div class="cab"><label for="txtSond">Mensagem do WhatsApp (pode colar várias de uma vez)</label>
+      <button type="button" class="mini ok" id="btnLerClip">Colar da área de transferência</button></div>
+    <textarea id="txtSond" rows="9" placeholder="*Sondagem*&#10;30/09/2026&#10;Dia - 03&#10;*Anterior* 20.019&#10;*Atual* 19.534&#10;Be ▶️2.03▶️10.082&#10;Bb▶️1.90▶️9.452&#10;Tanque serviço ▶️600&#10;*Consumo* : 485&#10;Horas de navegação: 9,5&#10;Traslado: Breves x Ponta Negra"></textarea>
     <div id="previaSond" class="previaSond"></div>
     <div class="rodape"><button class="btn ghost" value="cancelar" formnovalidate>Cancelar</button><button class="btn" value="salvar" id="btnLancarSond" disabled>Lançar sondagem</button></div>
   </form>
@@ -660,6 +691,7 @@
     <div class="row">
       <div><label>Data *</label><input type="date" name="data" required></div>
       <div class="estreito"><label>Dia da comissão</label><input type="number" min="0" name="dia"></div>
+      <div class="estreito"><label title="Somadas aos horímetros dos MCP">Horas de navegação</label><input type="number" step="any" min="0" max="24" name="horasNav"></div>
       <div><label>Situação</label><select name="situacao"><option>Porto</option><option>Viagem</option><option>Fundeado</option></select></div>
     </div>
     <div class="row">
@@ -697,11 +729,17 @@
   </form>
 </dialog>
 
+<dialog id="dlgFicha" class="largo" aria-labelledby="fichaTit">
+  <div class="fichaTopo"><h3 id="fichaTit">Equipamento</h3><button class="mini" data-fechaficha aria-label="Fechar a ficha">Fechar</button></div>
+  <div id="fichaCorpo"></div>
+</dialog>
+
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <div id="dica" class="dica" role="tooltip" hidden></div>
 
 <script src="js/util.js"></script>
 <script src="js/store.js"></script>
+<script src="js/backup.js"></script>
 <script src="js/manutencao.js"></script>
 <script src="js/sondagem.js"></script>
 <script src="js/distancias.js"></script>
@@ -714,6 +752,7 @@
 <script src="js/catmat.js"></script>
 <script src="js/servicos.js"></script>
 <script src="js/painel.js"></script>
+<script src="js/ficha.js"></script>
 <script src="js/config.js"></script>
 <script src="js/navio.js"></script>
 <script src="js/exemplo.js"></script>

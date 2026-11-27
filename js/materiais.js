@@ -219,12 +219,32 @@ function linhaMaterial(m) {
   return { m, it, k, estoque, calc, comprar, preco, precoFonte, total: comprar * preco, abaixo: estoque < k.minimo };
 }
 
+/* Horas de uso por ano medidas pelos horímetros (média dos motores com a tag MCP... ou MCA...). */
+function horasMedidas(motor) {
+  const eqs = DB.dados.equipamentos.filter(e => new RegExp('^' + motor, 'i').test(e.tag || ''));
+  const med = eqs.map(e => ({ e, h: Ficha.horasAno(e) })).filter(x => x.h);
+  if (!med.length) return { h: null, n: eqs.length, base: 0 };
+  return { h: Math.round(med.reduce((s, x) => s + x.h.h, 0) / med.length / 10) * 10, n: eqs.length, base: med.length,
+    dias: Math.min(...med.map(x => x.h.dias)) };
+}
+
 const Materiais = {
+  realce: new Set(),
+
   render() {
     const c = matCfg();
     const f = $('#formMatCfg');
     if (!f) return;
     f.elements.hMCP.value = c.horasAno.MCP; f.elements.hMCA.value = c.horasAno.MCA;
+    ['MCP', 'MCA'].forEach(mt => {
+      const m = horasMedidas(mt), box = $('#med' + mt);
+      if (!box) return;
+      const atual = num(c.horasAno[mt]);
+      box.innerHTML = m.h != null
+        ? 'Medido: <b>' + fmt(m.h) + ' h/ano</b> (' + m.base + ' de ' + m.n + ' motores, ' + m.dias + '+ dias de leituras)' +
+          (atual !== m.h ? ' <button type="button" class="mini ok" data-usarmed="' + mt + '">Usar</button>' : ' <span class="ok-ink">em uso</span>')
+        : 'Sem leituras de horímetro suficientes ainda: vale o valor digitado.';
+    });
     f.elements.catMtu.value = c.catMtu; f.elements.reserva.checked = !!c.reserva; f.elements.anoAlvo.value = c.anoAlvo;
     const linhas = MATERIAIS.map(linhaMaterial);
     let html = '';
@@ -238,7 +258,7 @@ const Materiais = {
         const onde = m.usos.map(u => (u.tags.length ? u.tags.join(', ') : u.n + ' un.') + ' · ' + intervaloTxt(u.regra, c.catMtu) +
           (u.confirmar ? ' <span class="tagIA" title="Vínculo ou quantidade por troca ainda a confirmar">confirmar</span>' : '')).join('<br>');
         const hist = m.hist.map(h => h.ano + ': ' + h.qtd + ' un. × ' + moeda(h.est) + (h.hom ? ' (homol. ' + moeda(h.hom) + ')' : ' (sem resultado)')).join('<br>');
-        const cls = [l.abaixo ? 'abaixo' : '', l.it.fora || c['fora_' + g] ? 'fora' : ''].filter(Boolean).join(' ');
+        const cls = [l.abaixo ? 'abaixo' : '', l.it.fora || c['fora_' + g] ? 'fora' : '', this.realce.has(m.id) ? 'realce' : ''].filter(Boolean).join(' ');
         return '<tr' + (cls ? ' class="' + cls + '"' : '') + '><td><label class="selmat"><input type="checkbox" data-mat="' + m.id + '" data-campo="fora"' +
           (l.it.fora ? '' : ' checked') + '> <b>' + esc(m.nome) + '</b></label>' + campoCatmat(m, l.it) +
           '<div class="sub">' + hist + '</div>' + (m.obs ? '<div class="sub alerta">' + esc(m.obs) + '</div>' : '') + '</td>' +
@@ -257,6 +277,22 @@ const Materiais = {
     $('#matResumo').innerHTML = '<b>' + sel.length + ' itens a comprar · R$ ' + moeda(tot) + '</b>' +
       (tot > 60000 ? ' <span class="alerta">perto ou acima do limite do art. 75, II. Confira o valor vigente no ano e some as demais dispensas da UG com objetos do mesmo ramo (art. 75, § 1º).</span>' : '') +
       (abaixo ? '<br><span class="alerta">' + abaixo + ' materiais com estoque abaixo de uma troca completa (linhas destacadas).</span>' : '');
+  },
+
+  /* Vindo do Painel ou da ficha: marca estes materiais para a dispensa anual e mostra onde estão. */
+  destacar(ids, motivo) {
+    const c = matCfg();
+    ids.forEach(id => {
+      matItem(id).fora = false;
+      const m = MATERIAIS.find(x => x.id === id);
+      if (m) c['fora_' + m.grupo] = false;
+    });
+    this.realce = new Set(ids);
+    DB.salvar();
+    irPara('materiais');
+    const tr = $('#tabMat tr.realce');
+    if (tr) tr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    toast((motivo ? motivo + ': ' : '') + ids.length + ' material(is) marcado(s) para a dispensa anual. Confira a quantidade e clique em “Criar dispensa com os itens marcados”.');
   },
 
   selecionados() {
@@ -335,6 +371,14 @@ const Materiais = {
       toast('CATMAT ' + b.dataset.cod + ' aplicado. Para voltar, apague o código na caixa.');
     });
     $('#btnMatDispensa').onclick = () => this.criarDispensa();
+    f.addEventListener('click', e => {
+      const b = e.target.closest('[data-usarmed]'); if (!b) return;
+      const m = horasMedidas(b.dataset.usarmed);
+      if (m.h == null) return;
+      matCfg().horasAno[b.dataset.usarmed] = String(m.h);
+      DB.salvar();
+      toast('Horas por ano dos ' + b.dataset.usarmed + ' atualizadas para ' + fmt(m.h) + ' h, medidas pelos horímetros.');
+    });
     $('#btnMatRotinas').onclick = () => this.carregarRotinas();
   }
 };

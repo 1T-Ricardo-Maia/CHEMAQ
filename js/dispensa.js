@@ -326,6 +326,10 @@ function textoFinal(P, chave, padrao) {
 const Dispensa = {
   atual: null,
   doc: 'atos',
+  _auto: {},
+  /* Modo rápido: o formulário abre só com os campos em branco (os preenchidos pelo pacote, pela aba
+   * Material ou Serviço e os textos automáticos ficam recolhidos). Preferência guardada no navegador. */
+  soFalta: (() => { try { return localStorage.getItem('chemaq.dispSoFalta') !== '0'; } catch (e) { return true; } })(),
 
   lista() { return DB.dados.dispensas || (DB.dados.dispensas = []); },
 
@@ -388,6 +392,7 @@ const Dispensa = {
     $('#dJson').value = '';
     $('#dispEditor').classList.remove('hidden');
     this.renderDocs();
+    this.aplicarModo();
     $('#dispEditor').scrollIntoView({ behavior: 'smooth', block: 'start' });
   },
 
@@ -466,7 +471,7 @@ const Dispensa = {
   /* Partes do formulário que dependem dos dados: escolhas, textos automáticos, contadores e progresso. */
   renderForm(P, pad) {
     const f = $('#formDisp'), C = DB.dados.dispCfg || {};
-    const auto = metaAuto(P, pad);
+    const auto = this._auto = metaAuto(P, pad);
     ['assunto', 'finalidade', 'contribuicao', 'comissionado'].forEach(k => { f.elements[k].placeholder = auto[k]; });
     const v = num(P.valor);
     $('#valorExtenso').textContent = v != null ? 'R$ ' + moeda(v) + ' · ' + extensoReais(v) : '';
@@ -490,9 +495,44 @@ const Dispensa = {
       $('.cont', d).classList.toggle('ok', n === t);
       feitos += n; total += t;
     });
+    this.renderFalta();
     const pct = total ? Math.round(feitos / total * 100) : 0;
     $('#dispProgN').textContent = feitos + '/' + total + ' · ' + pct + '%';
     $('#dispProgBarra').style.width = pct + '%';
+  },
+
+  /* Campos do Passo 2 ainda em branco (sem valor e sem texto automático). */
+  faltando() {
+    return $$('#formDisp details.secao:not(#secOrg) [name]').filter(el => el.type !== 'hidden' && !el.classList.contains('hidden') &&
+      !String(el.value).trim() && !(el.name in this._auto && el.placeholder)).map(el => {
+      const lab = el.closest('div') && $('label', el.closest('div'));
+      return { el, rot: lab ? lab.textContent.replace(/\s*\*$/, '') : el.name };
+    });
+  },
+  renderFalta() {
+    const f = this.faltando();
+    $('#dispSoFalta').checked = this.soFalta;
+    $('#dispFalta').innerHTML = f.length
+      ? '<span class="sub">Falta:</span>' + f.map(x => '<button type="button" class="chip" data-falta="' + esc(x.el.name) + '">' + esc(x.rot) + '</button>').join('')
+      : '<span class="sub ok-ink">Todos os campos do processo preenchidos.</span>';
+  },
+  /* Esconde (no modo rápido) os campos já preenchidos e as seções completas. Só roda ao abrir e ao
+   * ligar/desligar o modo, para um campo não sumir enquanto a pessoa digita nele. */
+  aplicarModo() {
+    const falta = new Set(this.faltando().map(x => x.el));
+    $$('#formDisp details.secao').forEach(d => {
+      if (d.id === 'secOrg') { d.classList.toggle('hidden', this.soFalta && !$('#dispOrg .alerta')); return; }
+      let n = 0;
+      $$('[name]', d).forEach(el => {
+        const w = el.closest('div'); if (!w || w === d) return;
+        const tem = falta.has(el);
+        if (tem) n++;
+        w.classList.toggle('oculto', this.soFalta && !tem);
+      });
+      d.classList.toggle('hidden', this.soFalta && !n);
+      if (this.soFalta && n) d.open = true;
+    });
+    $('#cardIA').classList.toggle('hidden', this.soFalta);
   },
 
   escolher(campo, valor) {
@@ -651,6 +691,18 @@ const Dispensa = {
       espera = setTimeout(() => this.gravar(), 400);
     });
     f.addEventListener('submit', e => e.preventDefault());
+    $('#dispSoFalta').addEventListener('change', e => {
+      this.soFalta = e.target.checked;
+      try { localStorage.setItem('chemaq.dispSoFalta', this.soFalta ? '1' : '0'); } catch (err) { /* só nesta visita */ }
+      this.aplicarModo();
+    });
+    $('#dispFalta').addEventListener('click', e => {
+      const b = e.target.closest('[data-falta]'); if (!b) return;
+      const el = f.elements[b.dataset.falta]; if (!el) return;
+      const d = el.closest('details'); if (d) { d.classList.remove('hidden'); d.open = true; }
+      const w = el.closest('div'); if (w) w.classList.remove('oculto');
+      el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
     $('#tabDispItens').addEventListener('change', e => { if (e.target.dataset.item != null) this.mudarItem(e.target); });
 
     $('#tab-dispensa').addEventListener('click', e => {

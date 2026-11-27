@@ -9,9 +9,10 @@ const Config = {
     Processo.renderModelos();
     $('#nomeNavio').textContent = DB.dados.navio.nome || 'Departamento de Máquinas';
     const d = DB.dados;
-    $('#infoBackup').textContent = 'Neste navegador: ' + d.equipamentos.length + ' equipamentos, ' + d.rotinas.length + ' rotinas, ' +
-      d.os.length + ' OS, ' + d.combustivel.length + ' lançamentos de combustível e ' + (d.dispensas || []).length + ' dispensas.' +
-      (d.ultimoBackup ? ' Último backup exportado em ' + new Date(d.ultimoBackup).toLocaleString('pt-BR') + '.' : ' Nenhum backup exportado ainda.');
+    $('#infoBackup').textContent = 'O backup leva tudo num arquivo só: ' + d.equipamentos.length + ' equipamentos, ' + d.rotinas.length + ' rotinas, ' +
+      d.os.length + ' OS, ' + d.combustivel.length + ' lançamentos de combustível, ' + (d.dispensas || []).length + ' dispensas, ' +
+      (d.pacotes || []).length + ' pacotes de serviço salvos, ' + Object.keys(d.modelosDisp || {}).length + ' modelos de atos e os ajustes da aba Material.';
+    Backup.renderConfig();
   },
 
   ligar() {
@@ -25,11 +26,7 @@ const Config = {
     grava($('#formCombCfg'), 'combConfig');
     grava($('#formDispCfg'), 'dispCfg');
 
-    $('#btnBackup').onclick = () => {
-      DB.dados.ultimoBackup = new Date().toISOString();
-      DB.salvar();
-      baixarArquivo('chemaq-backup-' + hojeIso() + '.json', JSON.stringify(DB.dados, null, 1), 'application/json');
-    };
+    $('#btnBackup').onclick = () => Backup.baixar();
     $('#inBackup').onchange = async e => {
       const arq = e.target.files[0]; e.target.value = '';
       if (!arq) return;

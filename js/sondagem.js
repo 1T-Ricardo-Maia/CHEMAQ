@@ -6,6 +6,7 @@
  *   *Anterior* 20.019   *Atual* 19.534
  *   Be ▶️2.03▶️10.082   Bb▶️1.90▶️9.452   Tanque serviço ▶️600
  *   *Consumo* : 485
+ *   Horas de navegação: 9,5                  (opcional; soma nos horímetros dos MCP)
  *   Traslado: Breves x Ponta Negra          (opcional)
  *   *Sondagem da água* Aguada=16.645 Consumo=2.326   (opcional)
  *
@@ -131,12 +132,20 @@ const Sondagem = {
       if (m) r.consumoAgua = this.litros(m[1]);
     }
 
+    /* Horas de navegação: "Horas de navegação: 9,5", "Navegação 9h30", "HN: 9.5". */
+    m = pega(oleo, /(?:horas?\s*(?:de\s*)?navega[çc][ãa]o|\bnavega[çc][ãa]o|\bh\.?\s*nav\.?|\bhn)\s*[:=▶-]*\s*(\d{1,2}(?:[.,]\d+)?)\s*(?:h\s*(\d{1,2})\b)?/i);
+    if (m) {
+      const h = Number(m[1].replace(',', '.')) + (m[2] ? Number(m[2]) / 60 : 0);
+      if (h > 0 && h <= 24) r.horasNav = Math.round(h * 10) / 10;
+      else avisos.push('Horas de navegação fora de 0 a 24 h: confira.');
+    }
+
     /* Trecho: "Traslado: A x B", "Trecho: A x B" ou uma linha solta "A x B". */
     m = pega(oleo, /(?:traslado|trecho|travessia|singradura)\s*[:=-]\s*([^\n]+)/i);
     if (m) r.trecho = this.trecho(m[1]) || m[1].trim();
 
     /* Linhas que não são campos conhecidos viram comissão/observação. */
-    const conhecida = /^(sondagem|anterior|atual|b[eb]\b|tanque|servi[çc]o|consum[o0]\s*[:=▶-]*\s*\d|dia\s*[-–:nº°]*\s*\d|\d{1,2}\/\d{1,2}\/\d{2,4}|aguada|recebi|abasteci|transfer)/i;
+    const conhecida = /^(sondagem|anterior|atual|b[eb]\b|tanque|servi[çc]o|consum[o0]\s*[:=▶-]*\s*\d|dia\s*[-–:nº°]*\s*\d|\d{1,2}\/\d{1,2}\/\d{2,4}|aguada|recebi|abasteci|transfer|horas?\s*(de\s*)?navega|navega[çc][ãa]o\s*[:=▶-]*\s*\d|h\.?\s*nav|hn\s*[:=▶-]*\s*\d)/i;
     const soltas = oleo.split('\n').map(s => s.replace(/;\s*$/, '').trim()).filter(s => s && !conhecida.test(s));
     const resto = [];
     soltas.forEach(s => {

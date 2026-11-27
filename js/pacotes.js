@@ -73,6 +73,7 @@ const Pacotes = {
     P.pacoteId = id;
     preencherForm($('#formDisp'), P);
     Dispensa.gravar();
+    Dispensa.aplicarModo();
     toast('Pacote aplicado. Confira o que foi constatado' + (c.codigo ? '' : ' e busque o código CATSER') + '.');
   },
 

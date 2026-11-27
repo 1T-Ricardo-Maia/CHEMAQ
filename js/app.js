@@ -52,6 +52,9 @@ document.addEventListener('DOMContentLoaded', () => {
   Catmat.ligar();
   Servicos.ligar();
   Config.ligar();
+  Painel.ligar();
+  Ficha.ligar();
+  Backup.ligar();
 
   $('.tabs').addEventListener('click', e => {
     const b = e.target.closest('[data-tab]'); if (!b) return;
@@ -83,4 +86,19 @@ document.addEventListener('DOMContentLoaded', () => {
   let salva = null;
   try { salva = localStorage.getItem('chemaq.aba'); } catch (e) { salva = null; }
   if (salva) { const [a, s] = salva.split(':'); if ($('#tab-' + a)) irPara(a, s); }
+
+  /* Atalhos do aplicativo instalado: ?acao=sondagem abre o Colar sondagem; ?aba=x abre a aba. */
+  const q = new URLSearchParams(location.search);
+  if (q.get('aba') && $('#tab-' + q.get('aba'))) irPara(q.get('aba'));
+  if (q.get('acao') === 'sondagem') { irPara('combustivel'); Comb.abrirColar(); }
+  if (q.has('acao') || q.has('aba')) history.replaceState(null, '', location.pathname);
+  $('#btnSondTopo').onclick = () => { irPara('combustivel'); Comb.abrirColar(); };
+
+  /* Instalável (PWA): service worker e o botão Instalar quando o navegador oferece. */
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+    navigator.serviceWorker.register('sw.js').catch(() => { /* segue funcionando sem instalar */ });
+  }
+  let pedidoInstalar = null;
+  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); pedidoInstalar = e; $('#btnInstalar').classList.remove('hidden'); });
+  $('#btnInstalar').onclick = () => { if (pedidoInstalar) { pedidoInstalar.prompt(); pedidoInstalar = null; $('#btnInstalar').classList.add('hidden'); } };
 });
