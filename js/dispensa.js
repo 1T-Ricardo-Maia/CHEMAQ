@@ -665,39 +665,6 @@ const Dispensa = {
   },
 
   /* ---------- Word ---------- */
-  dfdCorpo() {
-    const P = this.atual, C = DB.dados.dispCfg || {}, pad = textosPadrao(P);
-    const { p } = Docx;
-    const tf = k => textoFinal(P, k, pad);
-    const paragrafos = (txt, op) => String(txt).split(/\n+/).map(l => p(l, op)).join('');
-    const tipos = ['Serviço não continuado', 'Serviço continuado SEM dedicação exclusiva de mão de obra',
-      'Serviço continuado COM dedicação exclusiva de mão de obra', 'Material de consumo', 'Material permanente/equipamento'];
-    const secao = (t, k) => p(t, { b: true, antes: 160 }) + paragrafos(tf(k), { recuo: true });
-    const assin = (nome, posto, funcao) => p(C.cidade ? C.cidade + ', na data da assinatura' : 'Na data da assinatura', { alinha: 'centro', antes: 360, depois: 720 }) +
-      p((nome || '').toUpperCase(), { alinha: 'centro', b: true, depois: 0 }) + p(posto || '', { alinha: 'centro', depois: 0 }) + p(funcao, { alinha: 'centro' });
-    const corpo =
-      p('MARINHA DO BRASIL', { alinha: 'centro', b: true, depois: 0 }) +
-      p((C.om || '').toUpperCase(), { alinha: 'centro', b: true, depois: 240 }) +
-      p('DOCUMENTO DE FORMALIZAÇÃO DE DEMANDA', { alinha: 'centro', b: true, depois: 240 }) +
-      p([{ t: 'OMAp: ', b: true }, C.om || ''], { depois: 40 }) +
-      p([{ t: 'Área Requisitante ou Técnica (Unidade/Setor/Depto): ', b: true }, (C.setor || '') + (C.om ? ' - ' + C.om : '')], { depois: 40 }) +
-      p([{ t: 'Responsável pela Demanda: ', b: true }, [C.respPosto, (C.respNome || '').toUpperCase()].filter(Boolean).join(' '),
-        { t: '    Telefone: ', b: true }, C.respTel || ''], { depois: 40 }) +
-      p([{ t: 'Matrícula/SIAPE: ', b: true }, C.respMat || '', { t: '    E-mail: ', b: true }, C.respEmail || ''], { depois: 200 }) +
-      p('Objeto:', { b: true, depois: 40 }) +
-      tipos.map(t => p('(' + (P.tipoObjeto === t ? 'X' : '  ') + ') ' + t, { depois: 0 })).join('') +
-      secao('1. JUSTIFICATIVA DA NECESSIDADE DA CONTRATAÇÃO', 'dfdJustificativa') +
-      secao('2. DESCRIÇÃO SUCINTA DO OBJETO', 'descricaoSucinta') +
-      secao('3. QUANTIDADE A SER CONTRATADA', 'quantidades') +
-      secao('4. ESTIMATIVA PRELIMINAR DO VALOR DA CONTRATAÇÃO', 'dfdValor') +
-      secao('5. INDICAÇÃO DA DATA PRETENDIDA PARA A CONCLUSÃO DA CONTRATAÇÃO', 'dfdData') +
-      secao('6. GRAU DE PRIORIDADE DA COMPRA OU DA CONTRATAÇÃO', 'dfdPrioridade') +
-      secao('7. INDICAÇÃO DE VINCULAÇÃO OU DEPENDÊNCIA COM O OBJETO DE OUTRO DOCUMENTO DE FORMALIZAÇÃO DA DEMANDA', 'dfdVinculo') +
-      assin(C.respNome, C.respPosto, 'Responsável pela contratação direta') +
-      assin(C.ordNome, C.ordPosto, C.ordFuncao || 'Ordenador de Despesas');
-    return corpo;
-  },
-
   /* ETP, TR e Aviso num só .docx de conferência, campo a campo. */
   rascunhoCorpo() {
     const P = this.atual, C = DB.dados.dispCfg || {}, pad = textosPadrao(P);
