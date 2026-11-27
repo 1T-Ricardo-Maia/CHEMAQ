@@ -276,3 +276,11 @@ details.secao>:not(summary){margin:10px 12px}
 .peca.compras em{color:var(--sutil)}
 .catmat{margin:4px 0 2px}
 .catmat .alerta{margin-top:2px}
+.sugCat{margin:4px 0 2px;padding:6px 8px;border-left:2px solid var(--brass);background:var(--acento-bg);border-radius:2px;font-size:12.5px}
+.sugCat b{color:var(--dest);font-weight:500}
+.sugCat .mini{margin-left:6px}
+.catBusca{align-items:center}
+.catBusca .btn{width:100%}
+.catItem{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--line2);font-size:13px;line-height:1.45}
+.catItem .mini{flex:0 0 auto}
+.catItem b{font-family:var(--mono);font-weight:500;color:var(--dest)}

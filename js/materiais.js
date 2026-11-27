@@ -154,7 +154,17 @@ function campoCatmat(m, it) {
   return '<div class="catmat"><span class="sub">CATMAT</span> <input class="mini-in larga" type="text" inputmode="numeric" data-mat="' + m.id +
     '" data-campo="catmat" value="' + esc(it.catmat || '') + '" placeholder="' + esc(m.catmat) + '" aria-label="CATMAT de ' + esc(m.nome) + '">' +
     (trocado ? ' <span class="sub">trocado (era ' + esc(m.catmat) + ')</span>'
-      : m.catmatAlerta ? '<div class="sub alerta">⚠ ' + esc(m.catmatAlerta) + '. Digite o código certo aqui.</div>' : '') + '</div>';
+      : m.catmatAlerta ? '<div class="sub alerta">⚠ ' + esc(m.catmatAlerta) + '. Digite o código certo aqui.</div>' : '') +
+    sugestaoCatmat(m, it) + '</div>';
+}
+function sugestaoCatmat(m, it) {
+  const s = typeof SUGESTOES_CATMAT !== 'undefined' && SUGESTOES_CATMAT[m.id];
+  if (!s || (it.catmat || '').trim() === s.c) return '';
+  return '<div class="sugCat">' + (s.c
+    ? '<b>Sugestão: ' + esc(s.c) + '</b> <button type="button" class="mini ok" data-usarcatmat="' + m.id + '" data-cod="' + esc(s.c) + '">Usar ' + esc(s.c) + '</button>' +
+      '<div class="sub">' + esc(s.d) + '. ' + esc(maiusc1(s.nota)) + '.</div>'
+    : '<b>Sem código equivalente no catálogo.</b><div class="sub">Família: ' + esc(s.familia) + '; ' + esc(s.nota) + '. Caminho: pedido de catalogação ou o código genérico da família.</div>') +
+    '</div>';
 }
 function matItem(id) { const c = matCfg(); return c.itens[id] || (c.itens[id] = {}); }
 
@@ -317,6 +327,12 @@ const Materiais = {
       if (t.dataset.campo === 'fora') matItem(t.dataset.mat).fora = !t.checked;
       else matItem(t.dataset.mat)[t.dataset.campo] = t.value.trim();
       DB.salvar();
+    });
+    $('#tabMat').addEventListener('click', e => {
+      const b = e.target.closest('[data-usarcatmat]'); if (!b) return;
+      matItem(b.dataset.usarcatmat).catmat = b.dataset.cod;
+      DB.salvar();
+      toast('CATMAT ' + b.dataset.cod + ' aplicado. Para voltar, apague o código na caixa.');
     });
     $('#btnMatDispensa').onclick = () => this.criarDispensa();
     $('#btnMatRotinas').onclick = () => this.carregarRotinas();
