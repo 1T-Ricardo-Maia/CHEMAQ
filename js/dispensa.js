@@ -396,6 +396,7 @@ const Dispensa = {
       '<td>' + (P.atualizado ? new Date(P.atualizado).toLocaleDateString('pt-BR') : '') + '</td>' +
       '<td class="botoes"><button class="mini ok" data-abrirdisp="' + P.id + '">Abrir</button>' +
       '<button class="mini" data-dupdisp="' + P.id + '">Duplicar</button>' +
+      '<button class="mini" data-soldisp="' + P.id + '" title="Criar a SOLEMP desta dispensa na aba Obtenção">SOLEMP</button>' +
       '<button class="mini del" data-deldisp="' + P.id + '">Excluir</button></td></tr>').join('');
     $('#vazioDisp').classList.toggle('hidden', l.length > 0);
     if (this.atual && !this.lista().includes(this.atual)) this.fechar();
@@ -768,6 +769,7 @@ const Dispensa = {
       const b = e.target.closest('button'); if (!b) return;
       const d = b.dataset;
       if (d.abrirdisp) this.abrir(d.abrirdisp);
+      else if (d.soldisp) { irPara('obtencao', 'solemp'); Obt.novaSolemp(d.soldisp); }
       else if (d.dupdisp) {
         const orig = this.lista().find(P => P.id === d.dupdisp);
         const copia = JSON.parse(JSON.stringify(orig));

@@ -345,3 +345,27 @@ dialog.largo{width:min(920px,calc(100vw - 24px))}
 #tabDispItens textarea.mini-in{margin-top:4px;resize:vertical}
 #tabDispItens td.num .mini-in{width:72px}
 #tabDispItens td.num .mini-in.larga{width:100px}
+
+/* Obtenção: fluxo da SOLEMP, casinhas de etapa, limite por PDM e detalhes do PNCP */
+.fluxo{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:6px 0 14px}
+.fluxo-et{background:var(--campo);border:1px solid var(--line);border-radius:4px;padding:10px 12px;text-align:left;color:var(--muted);cursor:pointer;font:inherit}
+.fluxo-et b{display:block;font-family:var(--display);font-size:24px;color:var(--dest);line-height:1.1}
+.fluxo-et span{font-size:12px}
+.fluxo-et[aria-pressed="true"]{border-color:var(--brass);background:var(--acento-bg);color:var(--ink)}
+.fluxo-et:focus-visible{outline:2px solid var(--dest);outline-offset:2px}
+.casinhas{display:flex;gap:3px}
+.casa{width:22px;height:16px;border:1px solid var(--line);border-radius:2px;background:var(--campo);cursor:pointer;padding:0}
+.casa.feita{background:var(--brass);border-color:var(--brass)}
+.casa[aria-current="step"]{box-shadow:0 0 0 2px var(--dest)}
+.casa:focus-visible{outline:2px solid var(--dest);outline-offset:2px}
+.mini-sel{padding:3px 6px;border:1px solid var(--line);border-radius:3px;background:var(--campo);color:var(--ink);font-size:12.5px;margin-top:4px;max-width:100%}
+.barra.pdm{height:6px;margin:0 0 4px;min-width:90px}
+#tabPdm details summary{cursor:pointer}
+.pncpDet h4{margin:14px 0 6px;font-family:var(--display);text-transform:uppercase;letter-spacing:.1em;font-size:12px;color:var(--muted)}
+.pncpDet a,#tabAtas a.mini,#tabProc a.mini{color:var(--dest)}
+a.mini{display:inline-block;text-decoration:none;margin-left:4px}
+#ataUasg{width:90px;text-align:left}
+#dlgEnt h4{margin:14px 0 4px}
+#solBusca,#ataBusca{flex:1;min-width:min(320px,100%)}
+#tab-obtencao .cab .acoes{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+#tab-obtencao .cab .acoes select{width:auto}
