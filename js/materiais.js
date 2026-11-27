@@ -147,6 +147,15 @@ function matCfg() {
   d.materiais = Object.assign({ horasAno: { MCP: '400', MCA: '4000' }, catMtu: 'I', reserva: true, anoAlvo: String(ano), itens: {} }, d.materiais || {});
   return d.materiais;
 }
+/* CATMAT em uso: o digitado na aba Material ou, se em branco, o da última dispensa. */
+function catmatDe(m) { return (matItem(m.id).catmat || '').trim() || m.catmat; }
+function campoCatmat(m, it) {
+  const trocado = (it.catmat || '').trim() && it.catmat.trim() !== m.catmat;
+  return '<div class="catmat"><span class="sub">CATMAT</span> <input class="mini-in larga" type="text" inputmode="numeric" data-mat="' + m.id +
+    '" data-campo="catmat" value="' + esc(it.catmat || '') + '" placeholder="' + esc(m.catmat) + '" aria-label="CATMAT de ' + esc(m.nome) + '">' +
+    (trocado ? ' <span class="sub">trocado (era ' + esc(m.catmat) + ')</span>'
+      : m.catmatAlerta ? '<div class="sub alerta">⚠ ' + esc(m.catmatAlerta) + '. Digite o código certo aqui.</div>' : '') + '</div>';
+}
 function matItem(id) { const c = matCfg(); return c.itens[id] || (c.itens[id] = {}); }
 
 function intervaloTxt(regra, cat) {
@@ -221,8 +230,7 @@ const Materiais = {
         const hist = m.hist.map(h => h.ano + ': ' + h.qtd + ' un. × ' + moeda(h.est) + (h.hom ? ' (homol. ' + moeda(h.hom) + ')' : ' (sem resultado)')).join('<br>');
         const cls = [l.abaixo ? 'abaixo' : '', l.it.fora || c['fora_' + g] ? 'fora' : ''].filter(Boolean).join(' ');
         return '<tr' + (cls ? ' class="' + cls + '"' : '') + '><td><label class="selmat"><input type="checkbox" data-mat="' + m.id + '" data-campo="fora"' +
-          (l.it.fora ? '' : ' checked') + '> <b>' + esc(m.nome) + '</b></label><div class="sub">CATMAT ' + esc(m.catmat) +
-          (m.catmatAlerta ? ' <span class="alerta" title="' + esc(m.catmatAlerta) + '">⚠ código a revisar</span>' : '') + '</div>' +
+          (l.it.fora ? '' : ' checked') + '> <b>' + esc(m.nome) + '</b></label>' + campoCatmat(m, l.it) +
           '<div class="sub">' + hist + '</div>' + (m.obs ? '<div class="sub alerta">' + esc(m.obs) + '</div>' : '') + '</td>' +
           '<td class="sub">' + onde + '</td>' +
           '<td class="num" title="' + esc(l.k.memoria.join('\n')) + '">' + fmt(l.k.anual, l.k.anual % 1 ? 1 : 0) + '<div class="sub">mín. ' + l.k.minimo + '</div></td>' +
@@ -251,8 +259,8 @@ const Materiais = {
     const ls = this.selecionados();
     if (!ls.length) { toast('Nenhum item a comprar nos grupos marcados.', true); return; }
     const grupos = [...new Set(ls.map(l => l.m.grupo))];
-    const itens = ls.map(l => ({ id: l.m.id, nome: l.m.nome, espec: l.m.espec, marca: l.m.marca, catmat: l.m.catmat,
-      un: 'UN', qtd: l.comprar, qtdCalc: l.calc, ajuste: l.comprar !== l.calc ? l.comprar : undefined, preco: Math.round(l.preco * 100) / 100,
+    const itens = ls.map(l => ({ id: l.m.id, nome: l.m.nome, espec: l.m.espec, marca: l.m.marca, catmat: catmatDe(l.m),
+      catmatAlerta: l.it.catmat ? '' : l.m.catmatAlerta || '', un: 'UN', qtd: l.comprar, qtdCalc: l.calc, ajuste: l.comprar !== l.calc ? l.comprar : undefined, preco: Math.round(l.preco * 100) / 100,
       onde: l.m.usos.map(u => u.rotina + (u.tags.length ? ' (' + u.tags.join(', ') + ')' : '')).join('; '),
       memoria: l.k.memoria.join('; ') + (l.k.minimo ? '; mais ' + l.k.minimo + ' un. de reserva para uma troca completa em comissão' : '') +
         (l.estoque ? '; menos ' + l.estoque + ' un. em estoque' : '') + ' = ' + l.calc + ' un.' }));

@@ -399,7 +399,9 @@ const Dispensa = {
     if (!tem) return;
     const total = P.itens.reduce((s, i) => s + (num(i.qtd) || 0) * (num(i.preco) || 0), 0);
     $('#tabDispItens tbody').innerHTML = P.itens.map((i, n) => '<tr><td class="num">' + (n + 1) + '</td><td><b>' + esc(i.nome) +
-      '</b><div class="sub">CATMAT ' + esc(i.catmat) + ' · ' + esc(i.onde) + '</div></td>' +
+      '</b><div class="sub">CATMAT <input class="mini-in larga" type="text" inputmode="numeric" data-item="' + n + '" data-campo="catmat" value="' +
+      esc(i.catmat) + '" aria-label="CATMAT do item ' + (n + 1) + '"> · ' + esc(i.onde) + '</div>' +
+      (i.catmatAlerta ? '<div class="sub alerta">⚠ ' + esc(i.catmatAlerta) + '</div>' : '') + '</td>' +
       '<td class="num"><input class="mini-in" type="number" min="1" step="1" data-item="' + n + '" data-campo="qtd" value="' + esc(i.qtd) + '"></td>' +
       '<td class="num"><input class="mini-in larga" type="text" inputmode="decimal" data-item="' + n + '" data-campo="preco" value="' + esc(moeda(num(i.preco))) + '"></td>' +
       '<td class="num">' + moeda((num(i.qtd) || 0) * (num(i.preco) || 0)) + '</td>' +
@@ -409,6 +411,12 @@ const Dispensa = {
 
   mudarItem(t) {
     const P = this.atual, i = P.itens[Number(t.dataset.item)];
+    if (t.dataset.campo === 'catmat') {
+      const v = t.value.trim();
+      if (!v) { toast('Informe o código CATMAT.', true); t.value = i.catmat; return; }
+      if (v !== i.catmat) { i.catmat = v; i.catmatAlerta = ''; }
+      this.gravar(); return;
+    }
     if (t.dataset.campo === 'qtd') {
       const q = parseInt(t.value, 10);
       if (!(q >= 1)) { toast('Quantidade mínima é 1. Para retirar o item, use "Tirar".', true); t.value = i.qtd; return; }

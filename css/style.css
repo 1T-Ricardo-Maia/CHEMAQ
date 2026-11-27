@@ -274,3 +274,5 @@ details.secao>:not(summary){margin:10px 12px}
 .peca em{font-style:normal;font-family:var(--mono);font-size:11px;color:var(--muted)}
 .peca:hover{border-color:var(--brass)}
 .peca.compras em{color:var(--sutil)}
+.catmat{margin:4px 0 2px}
+.catmat .alerta{margin-top:2px}
