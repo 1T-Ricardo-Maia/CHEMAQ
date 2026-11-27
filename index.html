@@ -77,6 +77,7 @@
   <button role="tab" data-tab="materiais" aria-selected="false">Material</button>
   <button role="tab" data-tab="servicos" aria-selected="false">Serviço</button>
   <button role="tab" data-tab="dispensa" aria-selected="false">Dispensa</button>
+  <button role="tab" data-tab="obtencao" aria-selected="false">Obtenção</button>
   <button role="tab" data-tab="config" aria-selected="false">Configurações</button>
 </nav>
 
@@ -350,10 +351,13 @@
     <div class="card hidden" id="dispItens">
       <div class="passo">Itens</div>
       <h2>Itens da dispensa</h2>
-      <p class="hint">Dispensa de material com vários itens, criada na aba Material. Ajuste a quantidade e o preço aqui; os textos e o valor total se atualizam.</p>
+      <p class="hint">Vem da aba Material, da IA ou é montada aqui. Ajuste nome, especificação, código, quantidade e preço; os textos, a tabela do TR e o valor total se atualizam.</p>
+      <p class="hint hidden" id="dispItensGrupo">Modalidade por grupo: dê o mesmo nome de grupo aos itens do mesmo lote. A tabela do TR sai com os itens reunidos por grupo e o subtotal de cada lote.</p>
+      <datalist id="dispGrupos"></datalist>
       <div class="tabela-wrap"><table class="tabela" id="tabDispItens">
-        <thead><tr><th class="num">Item</th><th>Material</th><th class="num">Qtd</th><th class="num">Unitário (R$)</th><th class="num">Total (R$)</th><th></th></tr></thead>
+        <thead><tr><th class="num">Item</th><th>Especificação</th><th class="num">Qtd</th><th class="num">Unitário (R$)</th><th class="num">Total (R$)</th><th></th></tr></thead>
         <tbody></tbody></table></div>
+      <div class="acoes" style="margin-top:8px"><button class="btn ghost" type="button" id="btnNovoItem">Adicionar item</button></div>
     </div>
 
     <form id="formDisp" autocomplete="off">
@@ -379,12 +383,47 @@
           <option>Serviço continuado COM dedicação exclusiva de mão de obra</option><option>Material de consumo</option>
           <option>Material permanente/equipamento</option></select>
         <select name="catTipo" class="hidden" tabindex="-1" aria-hidden="true"><option>CATSER</option><option>CATMAT</option></select>
+        <label>Modalidade de julgamento — como o Aviso e o TR vão julgar as propostas</label>
+        <div class="opcoes" id="dispCriterio">
+          <button type="button" class="opcao" data-criterio="item"><b>Menor preço por item</b><span>Cada item é disputado sozinho; com um item só, o objeto é único</span></button>
+          <button type="button" class="opcao" data-criterio="grupo"><b>Menor preço por grupo</b><span>Itens reunidos em lotes; vence quem cobrar menos pelo lote</span></button>
+          <button type="button" class="opcao" data-criterio="global"><b>Menor preço global</b><span>Todos os itens num lote único, disputado pelo valor total</span></button>
+        </div>
+        <div class="acoes" style="margin-top:8px"><button class="btn ghost" type="button" id="btnUsarItens">Usar tabela com vários itens</button></div>
+      </div>
+
+      <div class="card" id="cardIA">
+        <div class="passo">Passo 2 · opcional</div>
+        <h2>Orçamento e IA</h2>
+        <p class="hint">Entregue à IA o orçamento, os links dos produtos ou uma descrição do que se quer contratar. Ela devolve um JSON que preenche o formulário inteiro: equipamento, escopo, tabela de itens, valor, prazos e os textos do ETP, do TR e do Aviso. Tudo o que vier dela fica marcado com <span class="tagIA">IA</span> até você editar. A IA não inventa CATMAT/CATSER, marca nem preço: o que não estiver na fonte volta em branco.</p>
+        <div class="opcoes" id="iaModos">
+          <button type="button" class="opcao" data-iamodo="descricao"><b>Descrever por escrito</b><span>O que se pretende contratar, com o que já se sabe</span></button>
+          <button type="button" class="opcao" data-iamodo="arquivo"><b>Orçamento em PDF ou TXT</b><span>A proposta da empresa ou a planilha de cotação</span></button>
+          <button type="button" class="opcao" data-iamodo="links"><b>Links dos produtos</b><span>Um por linha; cada link vira um item</span></button>
+        </div>
+        <div data-painel="descricao"><label for="iaDescricao">Descrição</label>
+          <textarea id="iaDescricao" rows="4" placeholder="ex.: revisão completa da bomba de água bruta do MCA 1, com troca do selo mecânico, rolamentos e impelidor; a empresa X cotou R$ 8.900,00"></textarea></div>
+        <div data-painel="arquivo" class="hidden"><label for="iaArquivo">Arquivo do orçamento (até 4 MB)</label>
+          <input type="file" id="iaArquivo" accept=".pdf,.txt,.csv,application/pdf,text/plain">
+          <div class="sub" id="iaArqNome"></div></div>
+        <div data-painel="links" class="hidden"><label for="iaLinks">Links dos produtos — um por linha; a quantidade vai depois do link, separada por espaço</label>
+          <textarea id="iaLinks" rows="4" placeholder="https://loja.exemplo/filtro-psl962 4"></textarea></div>
+        <label class="check"><input type="checkbox" id="iaTextos" checked> Pedir também os textos longos (justificativa, requisitos, solução…)</label>
+        <div class="acoes" style="margin-top:10px">
+          <button class="btn" type="button" id="iaCopiar">Copiar o prompt</button>
+          <button class="btn hidden" type="button" id="iaChamar">Preencher com IA</button>
+          <button class="btn ghost" type="button" id="iaChaveBtn">Chave de IA</button>
+        </div>
+        <div class="ia"><label for="iaJson">Colar o JSON da IA</label>
+          <textarea id="iaJson" rows="4" placeholder='{ "servicoTitulo": "...", "alvo": "...", "itens": [ ... ] }'></textarea>
+          <div class="acoes" style="margin-top:8px"><button class="btn" type="button" id="iaAplicar">Preencher os campos com este JSON</button></div></div>
+        <p class="iaStatus" id="iaStatus" role="status"></p>
       </div>
 
       <div class="card">
-        <div class="passo">Passo 2</div>
+        <div class="passo">Passo 3</div>
         <h2>Campos do processo</h2>
-        <p class="hint">Tudo é editável. Campos de texto deixados em branco usam o texto automático, que aparece em cinza dentro da caixa.</p>
+        <p class="hint">Tudo é editável. Campos de texto deixados em branco usam o texto automático, que aparece em cinza dentro da caixa. Os campos que se repetem sugerem os valores das dispensas anteriores.</p>
 
         <details class="secao" open>
           <summary><span><b>Identificação do processo</b><small>Capa, autuação, autorização e nome dos arquivos</small></span><i class="cont"></i></summary>
@@ -393,6 +432,12 @@
             <div><label>Nº do processo (NUP)</label><input type="text" name="processoNum" placeholder="63387.000000/2026-00"></div>
             <div class="estreito"><label>Data da capa</label><input type="date" name="dataCapa"></div>
           </div>
+          <div class="row">
+            <div class="estreito"><label>Nº do ETP</label><input type="text" name="numETP"></div>
+            <div class="estreito"><label>Nº do Aviso</label><input type="text" name="numAviso"></div>
+            <div class="estreito"><label>Nº do TR</label><input type="text" name="numTR"></div>
+          </div>
+          <p class="sub">Em branco, o ETP, o Aviso e o TR levam o número da dispensa.</p>
           <div><label>Quem rubrica as folhas (Termo de Autuação)</label><input type="text" name="comissionado"></div>
         </details>
 
@@ -454,6 +499,26 @@
           </div>
         </details>
 
+        <details class="secao">
+          <summary><span><b>Sessão do Aviso</b><small>Data da sessão e horário da fase de lances</small></span><i class="cont"></i></summary>
+          <div class="row">
+            <div class="estreito"><label>Data da sessão</label><input type="date" name="dataSessao"></div>
+            <div class="estreito"><label>Horário da fase de lances</label><input type="text" name="horarioLances" placeholder="08:00 às 14:00" data-opc></div>
+          </div>
+        </details>
+
+        <details class="secao">
+          <summary><span><b>Dotação orçamentária</b><small>Opcional · sai na Declaração Orçamentária</small></span><i class="cont"></i></summary>
+          <div class="row">
+            <div><label>Programa de Trabalho (PTRES)</label><input type="text" name="ptres" data-opc></div>
+            <div><label>Fonte de Recursos</label><input type="text" name="fonte" data-opc></div>
+          </div>
+          <div class="row">
+            <div><label>Natureza da Despesa</label><input type="text" name="natureza" placeholder="339039" data-opc></div>
+            <div><label>Plano Interno</label><input type="text" name="planoInterno" data-opc></div>
+          </div>
+        </details>
+
         <details class="secao" id="secOrg">
           <summary><span><b>Organização militar e assinaturas</b><small>Vem de Configurações</small></span><i class="cont"></i></summary>
           <div id="dispOrg" class="lidaCfg"></div>
@@ -461,16 +526,6 @@
         </details>
       </div>
     </form>
-
-    <div class="card" id="cardIA">
-      <div class="passo">Passo 3 · opcional</div>
-      <h2>Redação com IA</h2>
-      <p class="hint">Os textos já saem prontos a partir dos campos acima. Para uma redação técnica mais completa, copie o pedido, cole no claude.ai junto com as páginas do manual e traga a resposta de volta. Não precisa de chave de API.</p>
-      <div class="acoes"><button class="btn ghost" id="btnPromptIA">Copiar pedido para a IA</button></div>
-      <div class="ia"><label for="dJson">Resposta da IA (JSON)</label>
-        <textarea id="dJson" rows="4" placeholder='{ "necessidade": "...", "requisitos": "...", ... }'></textarea>
-        <div class="acoes" style="margin-top:8px"><button class="btn" id="btnAplicarIA">Usar estes textos</button></div></div>
-    </div>
 
     <div class="card">
       <div class="passo">Passo 4</div>
@@ -494,6 +549,120 @@
         <button data-doc="aviso" aria-selected="false">Aviso</button>
       </div>
       <div id="dispDocs"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ OBTENÇÃO ═══════════ -->
+<section id="tab-obtencao" class="hidden">
+  <div class="subtabs" role="tablist" aria-label="Obtenção">
+    <button data-sub="solemp" aria-selected="true">SOLEMP</button>
+    <button data-sub="entregas" aria-selected="false">Entregas</button>
+    <button data-sub="empenhos" aria-selected="false">Notas de empenho</button>
+    <button data-sub="pdm" aria-selected="false">Limite por PDM</button>
+    <button data-sub="pncp" aria-selected="false">Processos e atas (PNCP)</button>
+  </div>
+
+  <div data-subpainel="solemp">
+    <div class="card">
+      <div class="cab"><h2>Solicitações de empenho <span class="n" id="nSol">0</span></h2>
+        <div class="acoes"><button class="btn" id="btnNovaSol">Nova SOLEMP</button></div></div>
+      <p class="hint">A SOLEMP nasce da dispensa homologada (botão “SOLEMP” na lista da aba Dispensa) e só termina com a nota fiscal certificada. Clique numa casinha para marcar a etapa; clique numa etapa abaixo para filtrar.</p>
+      <div class="fluxo" id="solFluxo"></div>
+      <div class="filtros"><input type="search" id="solBusca" placeholder="Buscar por número, NE, fornecedor ou item" aria-label="Buscar SOLEMP"></div>
+      <div class="tabela-wrap"><table class="tabela" id="tabSol">
+        <thead><tr><th>SOLEMP</th><th>Fornecedor · itens</th><th>NE</th><th class="num">Valor (R$)</th><th>Etapa</th><th></th></tr></thead>
+        <tbody></tbody></table></div>
+      <p class="vazio" id="vazioSol"></p>
+    </div>
+  </div>
+
+  <div data-subpainel="entregas" class="hidden">
+    <div class="kpis" id="kpisEnt"></div>
+    <div class="card">
+      <h2>Controle de entrega e prontificação</h2>
+      <p class="hint">Aqui aparecem as SOLEMPs empenhadas. Registre cada contato com o fornecedor e a data prevista: o prazo é contado em dias úteis (sábado, domingo e feriado nacional não contam). Três tentativas seguidas sem resposta marcam o fornecedor como “sem resposta”, para levar à Obtenção.</p>
+      <div class="tabela-wrap"><table class="tabela" id="tabEnt">
+        <thead><tr><th>SOLEMP · NE</th><th>Fornecedor</th><th>Objeto</th><th>Prazo</th><th></th></tr></thead>
+        <tbody></tbody></table></div>
+      <p class="vazio" id="vazioEnt">Nenhuma SOLEMP empenhada aguardando entrega.</p>
+    </div>
+  </div>
+
+  <div data-subpainel="empenhos" class="hidden">
+    <div class="card">
+      <div class="cab"><h2>Notas de empenho <span class="n" id="nNe">0</span></h2>
+        <div class="acoes"><label class="btn arquivo">Ler PDFs da NE<input type="file" id="neArquivos" accept="application/pdf,.pdf" multiple></label>
+          <button class="btn ghost" id="btnNovaNe">Lançar à mão</button></div></div>
+      <p class="hint">No SIAFI Web, imprima a nota de empenho em PDF e escolha os arquivos aqui (vários de uma vez). O CHEMAQ lê número, data, favorecido, valor, natureza de despesa e a SOLEMP citada, mostra para conferir e liga a nota à SOLEMP. O PDF não sai do computador.</p>
+      <p class="hint" id="neStatus" aria-live="polite"></p>
+      <div id="neLote" class="hidden">
+        <h3>Para conferir <span class="n" id="nLote">0</span></h3>
+        <div class="tabela-wrap"><table class="tabela" id="tabLote">
+          <thead><tr><th></th><th>Número</th><th>Data</th><th>Favorecido · CNPJ</th><th>Valor (R$)</th><th>ND</th><th>SOLEMP</th><th></th></tr></thead>
+          <tbody></tbody></table></div>
+        <div class="acoes" style="margin:8px 0"><button class="btn" id="btnLoteLancar">Lançar as marcadas</button><button class="btn ghost" id="btnLoteDescartar">Descartar</button></div>
+      </div>
+      <div class="tabela-wrap"><table class="tabela" id="tabNe">
+        <thead><tr><th>Número</th><th>Favorecido</th><th class="num">Valor (R$)</th><th>Natureza de despesa</th><th>SOLEMP · processo</th><th>Situação</th><th></th></tr></thead>
+        <tbody></tbody></table></div>
+      <p class="vazio" id="vazioNe">Nenhuma nota de empenho lançada.</p>
+    </div>
+  </div>
+
+  <div data-subpainel="pdm" class="hidden">
+    <div class="card">
+      <div class="cab"><h2>Limite anual por PDM</h2>
+        <div class="acoes"><select id="pdmAno" aria-label="Ano"></select><button class="btn" id="btnPdmAtualizar">Atualizar pelo PNCP</button></div></div>
+      <p class="hint">Na dispensa pelo valor (art. 75, II, da Lei 14.133/2021), a soma do que a UASG contrata no ano do mesmo PDM não pode passar de <b id="pdmLimite"></b> (Decreto nº 12.807/2025). O CHEMAQ soma, por PDM, os itens de material das dispensas do navio publicadas no PNCP e os das dispensas de material ainda não publicadas que estão aqui. O PDM do PNCP é deduzido da descrição do item (o nome antes das características); confira os casos limítrofes no Compras.gov.br.</p>
+      <p class="hint" id="pdmStatus" aria-live="polite"></p>
+      <div class="tabela-wrap"><table class="tabela" id="tabPdm">
+        <thead><tr><th>PDM</th><th class="num">Publicado no PNCP (R$)</th><th class="num">Planejado no CHEMAQ (R$)</th><th class="num">Total (R$)</th><th>Do limite</th></tr></thead>
+        <tbody></tbody></table></div>
+      <p class="vazio" id="vazioPdm">Nada somado neste ano. Clique em “Atualizar pelo PNCP” ou crie dispensas de material.</p>
+    </div>
+  </div>
+
+  <div data-subpainel="pncp" class="hidden">
+    <div class="card">
+      <div class="cab"><h2>Dispensas do navio no PNCP <span class="n" id="nProc">0</span></h2>
+        <div class="acoes"><select id="procAno" aria-label="Ano"></select><button class="btn" id="btnProcBuscar">Buscar no PNCP</button></div></div>
+      <p class="hint">Traz as dispensas publicadas pela UASG do navio (Configurações › Dados fixos da dispensa) e liga cada uma à dispensa do CHEMAQ pelo NUP. Marque a fase de cada processo para acompanhar. A consulta pode levar um minuto.</p>
+      <p class="hint" id="procStatus" aria-live="polite"></p>
+      <div class="tabela-wrap"><table class="tabela" id="tabProc">
+        <thead><tr><th>Dispensa · NUP</th><th>Objeto</th><th class="num">Estimado (R$)</th><th>Situação · fase</th><th></th></tr></thead>
+        <tbody></tbody></table></div>
+      <p class="vazio" id="vazioProc">Nenhuma dispensa trazida do PNCP ainda.</p>
+      <div id="procDet" class="hidden"><h3>Detalhes do processo</h3><div id="procDetBox"></div></div>
+    </div>
+    <div class="card">
+      <h2>Consultar um processo</h2>
+      <p class="hint">Cole o número de controle do PNCP (ex.: 00394502000144-1-006056/2026) ou o endereço da página do processo para ver anexos, itens e histórico.</p>
+      <div class="row catBusca">
+        <div><input type="text" id="pncpNumero" placeholder="00394502000144-1-006056/2026" aria-label="Número de controle no PNCP"></div>
+        <div class="estreito"><button type="button" class="btn" id="btnPncpBuscar">Consultar</button></div>
+      </div>
+      <div id="pncpRes"></div>
+    </div>
+    <div class="card">
+      <div class="cab"><h2>Atas de registro de preços <span class="n" id="nAtas">0</span></h2>
+        <div class="acoes"><input type="text" id="ataUasg" class="mini-in" aria-label="UASG gerenciadora" title="UASG gerenciadora"><button class="btn" id="btnAtasBuscar">Buscar atas</button></div></div>
+      <p class="hint">Atas da UASG gerenciadora (por padrão o Centro de Intendência em Belém). Antes de abrir uma dispensa, veja se já há ata vigente para o item; em “Itens e preços” aparecem o fornecedor e o preço registrado, úteis também na pesquisa de preços.</p>
+      <p class="hint" id="ataStatus" aria-live="polite"></p>
+      <div class="filtros"><input type="search" id="ataBusca" placeholder="Filtrar pelo objeto (ex.: filtro, bateria, óleo)" aria-label="Filtrar atas">
+        <select id="ataSit" aria-label="Vigência"><option value="">Todas</option><option value="vigentes">Vigentes</option><option value="vencendo">Vencem em 90 dias</option><option value="vencida">Vencidas</option></select></div>
+      <div class="tabela-wrap"><table class="tabela" id="tabAtas">
+        <thead><tr><th>Ata · compra</th><th>Objeto</th><th>Vigência</th><th></th></tr></thead>
+        <tbody></tbody></table></div>
+      <p class="vazio" id="vazioAtas"></p>
+    </div>
+    <div class="card">
+      <h2>Parâmetros da consulta</h2>
+      <form id="formObtCfg" class="row" autocomplete="off">
+        <div><label>CNPJ do órgão no PNCP</label><input type="text" name="cnpj" placeholder="00394502000144"><div class="sub">Comando da Marinha</div></div>
+        <div class="estreito"><label>UASG gerenciadora das atas</label><input type="text" name="uasgAtas" placeholder="784810"></div>
+        <div class="estreito"><label>Limite por PDM (R$)</label><input type="text" name="limitePdm"></div>
+      </form>
     </div>
   </div>
 </section>
@@ -734,6 +903,77 @@
   <div id="fichaCorpo"></div>
 </dialog>
 
+<dialog id="dlgSol" class="largo" aria-labelledby="dlgSolTit">
+  <form method="dialog" id="formSol" autocomplete="off">
+    <h3 id="dlgSolTit">SOLEMP</h3>
+    <div class="row">
+      <div class="estreito"><label>Nº da SOLEMP</label><input type="text" name="numero" placeholder="0123/2026"></div>
+      <div class="estreito"><label>Etapa</label><select name="etapa"><option value="encaminhada">Encaminhada</option><option value="conferida">Conferida</option><option value="empenhada">Empenhada</option><option value="entregue">Entregue / pronto</option><option value="certificada">NF certificada</option></select></div>
+      <div class="estreito"><label>Tipo</label><select name="tipo"><option value="material">Material</option><option value="servico">Serviço</option></select></div>
+      <div class="estreito"><label>Nota de empenho</label><input type="text" name="ne" placeholder="2026NE000183"></div>
+    </div>
+    <div class="row">
+      <div><label>Dispensa</label><select id="solDispensa"></select></div>
+      <div class="estreito" style="align-self:end"><button type="button" class="btn ghost" id="btnSolItensDisp">Trazer itens da dispensa</button></div>
+    </div>
+    <div class="row">
+      <div><label>Fornecedor</label><input type="text" name="fornecedor"></div>
+      <div class="estreito"><label>CNPJ</label><input type="text" name="cnpj"></div>
+      <div><label>Contato do fornecedor</label><input type="text" name="contato" placeholder="telefone ou e-mail"></div>
+    </div>
+    <div><label>Itens (um por linha: descrição ; quantidade ; valor total em R$)</label><textarea name="itensTxt" rows="5"></textarea></div>
+    <div><label>Observações</label><textarea name="obs" rows="2"></textarea></div>
+    <div class="rodape"><button class="btn ghost" value="cancelar" formnovalidate>Cancelar</button><button class="btn" value="salvar">Salvar</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlgEnt" class="largo" aria-labelledby="dlgEntTit">
+  <form method="dialog" id="formEnt" autocomplete="off">
+    <h3 id="dlgEntTit">Entrega</h3>
+    <p class="sub" id="entResumo"></p>
+    <div class="row">
+      <div><label>Situação</label><select name="sit" id="entSit"></select></div>
+      <div class="estreito"><label>Data prevista</label><input type="date" name="prev"></div>
+      <div class="estreito"><label>Entregue em</label><input type="date" name="entregue"></div>
+    </div>
+    <div><label>Observações</label><textarea name="obsEnt" rows="2"></textarea></div>
+    <h4>Registrar contato</h4>
+    <div class="row">
+      <div class="estreito"><label>Data</label><input type="date" name="ctData"></div>
+      <div class="estreito"><label>Meio</label><select name="ctMeio"><option>Telefone</option><option>WhatsApp</option><option>E-mail</option><option>Presencial</option></select></div>
+      <div class="estreito"><label>Respondeu?</label><select name="ctResp"><option value="sim">Sim</option><option value="nao">Não</option></select></div>
+      <div><label>O que foi tratado</label><input type="text" name="ctTxt"></div>
+      <div class="estreito" style="align-self:end"><button type="button" class="btn ghost" id="btnEntContato">Registrar</button></div>
+    </div>
+    <ul class="lista" id="entHist"></ul>
+    <div class="rodape"><button class="btn ghost" value="cancelar" formnovalidate>Cancelar</button><button class="btn" value="salvar">Salvar</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlgNe" aria-labelledby="dlgNeTit">
+  <form method="dialog" id="formNe" autocomplete="off">
+    <h3 id="dlgNeTit">Nota de empenho</h3>
+    <div class="row">
+      <div><label>Número *</label><input type="text" name="numero" required placeholder="2026NE000183"></div>
+      <div class="estreito"><label>Data</label><input type="date" name="data"></div>
+      <div class="estreito"><label>Valor (R$)</label><input type="text" name="valor"></div>
+    </div>
+    <div class="row">
+      <div><label>Favorecido</label><input type="text" name="favorecido"></div>
+      <div class="estreito"><label>CNPJ</label><input type="text" name="cnpj"></div>
+    </div>
+    <div class="row">
+      <div class="estreito"><label>Natureza de despesa</label><input type="text" name="nd" placeholder="339030"></div>
+      <div class="estreito"><label>SOLEMP</label><input type="text" name="solemp" placeholder="0123/2026"></div>
+      <div><label>Processo (NUP)</label><input type="text" name="processo"></div>
+      <div class="estreito"><label>Situação</label><select name="situacao"><option value="emitida">Emitida</option><option value="entregue">Material entregue</option><option value="paga">Paga</option><option value="anulada">Anulada</option></select></div>
+    </div>
+    <div><label>Observações</label><textarea name="obs" rows="2"></textarea></div>
+    <div class="rodape"><button class="btn ghost" value="cancelar" formnovalidate>Cancelar</button><button class="btn" value="salvar">Salvar</button></div>
+  </form>
+</dialog>
+
+
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <div id="dica" class="dica" role="tooltip" hidden></div>
 
@@ -746,6 +986,8 @@
 <script src="js/combustivel.js"></script>
 <script src="js/docx.js"></script>
 <script src="js/dispensa.js"></script>
+<script src="js/dispensa-ia.js"></script>
+<script src="js/obtencao.js"></script>
 <script src="js/processo.js"></script>
 <script src="js/pacotes.js"></script>
 <script src="js/materiais.js"></script>

@@ -70,6 +70,53 @@ const CATEGORIAS = [
   ['Material permanente/equipamento', 'Bens duráveis, que entram em carga']
 ];
 const maiusc1 = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+/* Modalidade de julgamento: muda o parcelamento (ETP 9), o regime de execução do serviço e o Aviso. */
+const CRITERIOS = [
+  { id: 'item', v: 'MENOR PREÇO POR ITEM', rot: 'Menor preço por item', dica: 'Cada item é disputado sozinho; com um item só, o objeto é único', aviso: 'menor preço' },
+  { id: 'grupo', v: 'MENOR PREÇO POR GRUPO', rot: 'Menor preço por grupo', dica: 'Itens reunidos em lotes; vence quem cobrar menos pelo lote', aviso: 'menor preço por grupo' },
+  { id: 'global', v: 'MENOR PREÇO GLOBAL', rot: 'Menor preço global', dica: 'Todos os itens num lote único, disputado pelo valor total', aviso: 'menor preço global' }
+];
+function criterioDe(P) { return CRITERIOS.find(c => c.id === P.criterio) || CRITERIOS[0]; }
+/* Lotes na ordem em que aparecem nos itens, com os números dos itens de cada um. */
+function gruposDe(P) {
+  const g = [];
+  (P.itens || []).forEach((i, n) => {
+    const nome = String(i.grupo || '').trim() || '(sem grupo)';
+    let x = g.find(y => y.nome === nome);
+    if (!x) g.push(x = { nome, itens: [] });
+    x.itens.push(n + 1);
+  });
+  return g;
+}
+/* Na modalidade por grupo, os itens ficam em sequência dentro de cada lote. */
+function ordenarPorGrupo(P) {
+  if (criterioDe(P).id !== 'grupo' || !Array.isArray(P.itens)) return;
+  const ordem = [];
+  P.itens.forEach(i => { const g = String(i.grupo || '').trim(); if (!ordem.includes(g)) ordem.push(g); });
+  P.itens = P.itens.map((it, k) => ({ it, k })).sort((a, b) => ordem.indexOf(String(a.it.grupo || '').trim()) - ordem.indexOf(String(b.it.grupo || '').trim()) || a.k - b.k).map(x => x.it);
+}
+function listaNumeros(ns) {
+  if (ns.length <= 1) return ns.join('');
+  if (ns.length > 2 && ns.every((n, i) => !i || n === ns[i - 1] + 1)) return ns[0] + ' a ' + ns[ns.length - 1];
+  return ns.slice(0, -1).join(', ') + ' e ' + ns[ns.length - 1];
+}
+function parcelamentoTxt(P, material) {
+  const cr = criterioDe(P), n = (P.itens || []).length;
+  if (cr.id === 'grupo' && n) {
+    return 'Adota-se o critério de julgamento de menor preço por grupo. Os itens foram reunidos em lotes de mesma natureza e de mesmo ' +
+      'perfil de fornecedor, de modo que um único fornecedor possa atender a cada lote inteiro, o que reduz o número de contratações a ' +
+      'gerir, preserva a compatibilidade entre os componentes de cada lote e mantém a competitividade, em observância ao art. 40, ' +
+      'inciso V, alínea "b", e §§ 2º e 3º, inciso I, da Lei nº 14.133/2021. Os lotes são: ' +
+      gruposDe(P).map((g, i) => 'Grupo ' + (i + 1) + ' – ' + g.nome + ' (ite' + (g.itens.length > 1 ? 'ns ' : 'm ') + listaNumeros(g.itens) + ')').join('; ') + '.';
+  }
+  if (cr.id === 'global') {
+    return 'Adota-se o critério de julgamento de menor preço global. Analisada a divisão do objeto, verificou-se que ' +
+      (n > 1 ? 'os itens' : 'o ' + (material ? 'objeto' : 'serviço')) + ' compõem um conjunto único e integrado, executado sobre o mesmo ' +
+      'equipamento e na mesma janela de indisponibilidade, e que a divisão traria risco ao conjunto e dificultaria a atribuição de ' +
+      'responsabilidade nos testes e na garantia, hipótese do art. 40, § 3º, inciso II, da Lei nº 14.133/2021.';
+  }
+  return null;
+}
 function ehMaterial(P) { return /^Material/.test(P.tipoObjeto); }
 
 /* ---------- textos ---------- */
@@ -221,6 +268,7 @@ function textosBase(P) {
     'Configura-se, assim, a hipótese do art. 40, § 3º, inciso II, da Lei nº 14.133/2021, sendo vencedor o fornecedor que ofertar o menor ' +
     'preço para o item único.';
 
+  t.parcelamento = parcelamentoTxt(P, material) || t.parcelamento;
   t.correlatas = 'Não há contratação correlata elaborada ou planejada por esta Organização Militar (UGR) ou pelo ' +
     (C.uge || '[UGE]') + ' (UGE).';
 
@@ -283,13 +331,19 @@ function textosBase(P) {
   t.trExecucao = '5.1. O prazo de ' + (material ? 'entrega' : 'execução do serviço') + ' é de ' + prazo + ' (' + extensoInteiro(prazo) +
     ') dias corridos, contados do recebimento da nota de empenho.\n\n5.3. O ' + (material ? 'material deverá ser entregue' : 'serviço deverá ser realizado') +
     ' ' + (C.local || 'a bordo do navio') + '.\n\n5.4. É facultada a vistoria prévia ao local de execução, mediante agendamento com a ' +
-    (C.setor || 'Divisão de Máquinas') + (C.respTel ? ', pelo telefone ' + C.respTel : '') + '.';
+    (C.setor || 'Divisão de Máquinas') + (C.respTel ? ', pelo telefone ' + C.respTel : '') + '.' +
+    (material ? '' : '\n\nO regime de execução é o de empreitada por preço ' + (criterioDe(P).id === 'item' && (P.itens || []).length > 1
+      ? 'unitário (art. 6º, inciso XXVIII, da Lei nº 14.133/2021).' : 'global (art. 6º, inciso XXIX, da Lei nº 14.133/2021).'));
   t.trGarantia = 'Os ' + (material ? 'materiais fornecidos' : 'serviços executados e as peças e materiais fornecidos') +
     ' contam com garantia mínima de ' + garantia + ' (' + extensoInteiro(garantia) + ') dias, contados do recebimento definitivo.';
 
-  t.avisoPreambulo = 'Torna-se público que o(a) ' + om + ', por meio do(a) ' + (C.setor || 'Divisão de Máquinas') + ', realizará Dispensa ' +
-    'Eletrônica, com critério de julgamento menor preço, na hipótese do art. 75, inciso II, nos termos da Lei n.º 14.133, de 1º de abril ' +
-    'de 2021, da Instrução Normativa Seges/ME nº 67, de 2021, e demais normas aplicáveis.';
+  t.avisoPreambulo = 'AVISO DE CONTRATAÇÃO DIRETA Nº ' + (P.numAviso || P.numeroDispensa || '[nº/ano]') + '\n' +
+    'Processo Administrativo nº ' + (P.processoNum || '[NUP]') + '\n\n' +
+    'Torna-se público que o(a) ' + om + ', por meio do(a) ' + (C.setor || 'Divisão de Máquinas') + ', realizará Dispensa ' +
+    'Eletrônica, com critério de julgamento ' + criterioDe(P).aviso + ', na hipótese do art. 75, inciso II, nos termos da Lei n.º 14.133, de 1º de abril ' +
+    'de 2021, da Instrução Normativa Seges/ME nº 67, de 2021, e demais normas aplicáveis.\n\n' +
+    'Data da sessão: ' + (P.dataSessao ? dataBr(P.dataSessao) : '[data]') + '\nHorário da Fase de Lances: ' + (P.horarioLances || '08:00 às 14:00') +
+    '\nLink: www.comprasnet.gov.br\nCritério de Julgamento: ' + criterioDe(P).aviso;
   t.avisoObjeto = objetoBase + (material ? '' : ', com fornecimento de todas as peças e materiais necessários') +
     ', nos termos da tabela e das especificações constantes do item 1.1 do Termo de Referência, conforme condições e exigências ' +
     'estabelecidas neste instrumento.';
@@ -342,6 +396,7 @@ const Dispensa = {
       '<td>' + (P.atualizado ? new Date(P.atualizado).toLocaleDateString('pt-BR') : '') + '</td>' +
       '<td class="botoes"><button class="mini ok" data-abrirdisp="' + P.id + '">Abrir</button>' +
       '<button class="mini" data-dupdisp="' + P.id + '">Duplicar</button>' +
+      '<button class="mini" data-soldisp="' + P.id + '" title="Criar a SOLEMP desta dispensa na aba Obtenção">SOLEMP</button>' +
       '<button class="mini del" data-deldisp="' + P.id + '">Excluir</button></td></tr>').join('');
     $('#vazioDisp').classList.toggle('hidden', l.length > 0);
     if (this.atual && !this.lista().includes(this.atual)) this.fechar();
@@ -389,7 +444,7 @@ const Dispensa = {
     opcoesEquip($('#dEquip'), '— escolha —');
     $('[name=mes]', f).innerHTML = MESES.map(m => '<option>' + m + '</option>').join('');
     preencherForm(f, this.atual);
-    $('#dJson').value = '';
+    $('#iaJson').value = '';
     $('#dispEditor').classList.remove('hidden');
     this.renderDocs();
     this.aplicarModo();
@@ -403,33 +458,62 @@ const Dispensa = {
     DB.salvar();
   },
 
+  /* Tabela de itens: vem da aba Material, da IA ou é montada aqui ("Usar tabela de itens"). */
   renderItens() {
     const P = this.atual, box = $('#dispItens');
     if (!box) return;
     const tem = Array.isArray(P.itens) && P.itens.length;
     box.classList.toggle('hidden', !tem);
+    $('#btnUsarItens').classList.toggle('hidden', !!tem);
     if (!tem) return;
+    const grupo = criterioDe(P).id === 'grupo';
+    const cod = ehMaterial(P) ? 'CATMAT' : (P.catTipo || 'CATSER');
+    $('#dispItensGrupo').classList.toggle('hidden', !grupo);
     const total = P.itens.reduce((s, i) => s + (num(i.qtd) || 0) * (num(i.preco) || 0), 0);
-    $('#tabDispItens tbody').innerHTML = P.itens.map((i, n) => '<tr><td class="num">' + (n + 1) + '</td><td><b>' + esc(i.nome) +
-      '</b><div class="sub">CATMAT <input class="mini-in larga" type="text" inputmode="numeric" data-item="' + n + '" data-campo="catmat" value="' +
-      esc(i.catmat) + '" aria-label="CATMAT do item ' + (n + 1) + '"> · ' + esc(i.onde) + '</div>' +
+    const inp = (n, campo, v, cls, extra) => '<input class="mini-in ' + (cls || '') + '" type="text" data-item="' + n + '" data-campo="' + campo +
+      '" value="' + esc(v == null ? '' : v) + '"' + (extra || '') + '>';
+    $('#tabDispItens tbody').innerHTML = P.itens.map((i, n) => '<tr><td class="num">' + (n + 1) + '</td><td>' +
+      (i.memoria ? '<b>' + esc(i.nome) + '</b>' : inp(n, 'nome', i.nome, 'texto', ' placeholder="NOME DO ITEM" aria-label="Nome do item ' + (n + 1) + '"')) +
+      (i.memoria ? '' : '<textarea class="mini-in texto" rows="2" data-item="' + n + '" data-campo="espec" placeholder="especificação técnica mínima, sem marca" aria-label="Especificação do item ' + (n + 1) + '">' + esc(i.espec || '') + '</textarea>') +
+      '<div class="sub">' + cod + ' ' + inp(n, 'catmat', i.catmat, 'larga', ' inputmode="numeric" aria-label="Código do item ' + (n + 1) + '"') +
+      ' · un ' + inp(n, 'un', i.un, '', ' style="width:56px" aria-label="Unidade do item ' + (n + 1) + '"') +
+      (grupo ? ' · grupo ' + inp(n, 'grupo', i.grupo, 'larga', ' list="dispGrupos" aria-label="Grupo do item ' + (n + 1) + '"') : '') +
+      (i.onde ? ' · ' + esc(i.onde) : '') + (i.ia ? '<span class="tagIA">IA</span>' : '') + '</div>' +
       (i.catmatAlerta ? '<div class="sub alerta">⚠ ' + esc(i.catmatAlerta) + '</div>' : '') + '</td>' +
       '<td class="num"><input class="mini-in" type="number" min="1" step="1" data-item="' + n + '" data-campo="qtd" value="' + esc(i.qtd) + '"></td>' +
-      '<td class="num"><input class="mini-in larga" type="text" inputmode="decimal" data-item="' + n + '" data-campo="preco" value="' + esc(moeda(num(i.preco))) + '"></td>' +
+      '<td class="num"><input class="mini-in larga" type="text" inputmode="decimal" data-item="' + n + '" data-campo="preco" value="' + esc(moeda(num(i.preco) || 0)) + '"></td>' +
       '<td class="num">' + moeda((num(i.qtd) || 0) * (num(i.preco) || 0)) + '</td>' +
       '<td class="botoes"><button class="mini del" data-tiraritem="' + n + '">Tirar</button></td></tr>').join('') +
       '<tr class="grupo"><td></td><td>Total</td><td></td><td></td><td class="num">' + moeda(total) + '</td><td></td></tr>';
+    $('#dispGrupos').innerHTML = gruposDe(P).filter(g => g.nome !== '(sem grupo)').map(g => '<option value="' + esc(g.nome) + '">').join('');
+  },
+
+  /* Passa a dispensa de item único para a tabela, levando o item atual como ITEM 1. */
+  usarItens() {
+    const P = this.atual, material = ehMaterial(P);
+    const qtd = parseInt(P.qtd, 10) || 1, v = num(P.valor);
+    P.itens = [{ nome: (P.servicoTitulo || '').toUpperCase(), espec: '', catmat: P.codigo || '', un: P.unidade || (material ? 'UN' : 'SERV'),
+      qtd, preco: v != null ? Math.round(v / qtd * 100) / 100 : 0, marca: '', onde: '', grupo: '' }];
+    this.totalItens(); this.renderDocs();
+  },
+  novoItem() {
+    const P = this.atual;
+    P.itens.push({ nome: '', espec: '', catmat: '', un: ehMaterial(P) ? 'UN' : 'SERV', qtd: 1, preco: 0, marca: '', onde: '', grupo: '' });
+    this.totalItens(); this.renderDocs();
   },
 
   mudarItem(t) {
-    const P = this.atual, i = P.itens[Number(t.dataset.item)];
-    if (t.dataset.campo === 'catmat') {
-      const v = t.value.trim();
-      if (!v) { toast('Informe o código CATMAT.', true); t.value = i.catmat; return; }
+    const P = this.atual, i = P.itens[Number(t.dataset.item)], c = t.dataset.campo;
+    delete i.ia;
+    if (c === 'catmat') {
+      const v = t.value.replace(/\D/g, '');
       if (v !== i.catmat) { i.catmat = v; i.catmatAlerta = ''; }
       this.gravar(); return;
     }
-    if (t.dataset.campo === 'qtd') {
+    if (['nome', 'espec', 'un', 'grupo'].includes(c)) { i[c] = c === 'un' ? t.value.trim().toUpperCase() : t.value.trim();
+      if (c === 'grupo') ordenarPorGrupo(P);
+      this.gravar(); return; }
+    if (c === 'qtd') {
       const q = parseInt(t.value, 10);
       if (!(q >= 1)) { toast('Quantidade mínima é 1. Para retirar o item, use "Tirar".', true); t.value = i.qtd; return; }
       if (i.qtdCalc != null && q !== i.qtdCalc) i.ajuste = q; else delete i.ajuste;
@@ -441,11 +525,14 @@ const Dispensa = {
     }
     this.totalItens();
   },
-  totalItens() {
+  totalItensSilencioso() {
     const P = this.atual;
     const v = P.itens.reduce((s, i) => s + (num(i.qtd) || 0) * (num(i.preco) || 0), 0);
     P.valor = v.toFixed(2).replace('.', ','); P.qtd = String(P.itens.length);
-    const f = $('#formDisp'); if (f.elements.valor) f.elements.valor.value = P.valor;
+  },
+  totalItens() {
+    this.totalItensSilencioso();
+    const f = $('#formDisp'); if (f.elements.valor) f.elements.valor.value = this.atual.valor;
     this.gravar();
   },
 
@@ -475,6 +562,15 @@ const Dispensa = {
     ['assunto', 'finalidade', 'contribuicao', 'comissionado'].forEach(k => { f.elements[k].placeholder = auto[k]; });
     const v = num(P.valor);
     $('#valorExtenso').textContent = v != null ? 'R$ ' + moeda(v) + ' · ' + extensoReais(v) : '';
+    ['numETP', 'numAviso', 'numTR'].forEach(k => { f.elements[k].placeholder = P.numeroDispensa || 'igual ao da dispensa'; });
+    const ia = new Set(P.iaCampos || []);
+    $$('[name]', f).forEach(el => {
+      el.classList.toggle('daIA', ia.has(el.name));
+      const lab = el.closest('div') && $('label', el.closest('div'));
+      if (lab) lab.classList.toggle('rotIA', ia.has(el.name));
+    });
+    $$('#dispCriterio [data-criterio]').forEach(b => b.setAttribute('aria-pressed', b.dataset.criterio === criterioDe(P).id));
+    renderHistorico();
     const cat = P.catTipo || 'CATSER';
     $$('#dispTipo [data-tipo]').forEach(b => b.setAttribute('aria-pressed', b.dataset.tipo === cat));
     const cats = cat === 'CATMAT' ? CATEGORIAS.slice(3) : CATEGORIAS.slice(0, 3);
@@ -490,9 +586,9 @@ const Dispensa = {
     $$('#formDisp details.secao').forEach(d => {
       let n = 0, t = 0;
       if (d.id === 'secOrg') { t = org.length; n = org.filter(([, x]) => x && String(x).trim()).length; }
-      else $$('[name]', d).forEach(el => { t++; if (String(el.value).trim() || (el.name in auto && el.placeholder)) n++; });
-      $('.cont', d).textContent = n + '/' + t;
-      $('.cont', d).classList.toggle('ok', n === t);
+      else $$('[name]:not([data-opc])', d).forEach(el => { t++; if (String(el.value).trim() || (el.name in auto && el.placeholder)) n++; });
+      $('.cont', d).textContent = t ? n + '/' + t : 'opcional';
+      $('.cont', d).classList.toggle('ok', n === t && t > 0);
       feitos += n; total += t;
     });
     this.renderFalta();
@@ -503,7 +599,7 @@ const Dispensa = {
 
   /* Campos do Passo 2 ainda em branco (sem valor e sem texto automático). */
   faltando() {
-    return $$('#formDisp details.secao:not(#secOrg) [name]').filter(el => el.type !== 'hidden' && !el.classList.contains('hidden') &&
+    return $$('#formDisp details.secao:not(#secOrg) [name]:not([data-opc])').filter(el => el.type !== 'hidden' && !el.classList.contains('hidden') &&
       !String(el.value).trim() && !(el.name in this._auto && el.placeholder)).map(el => {
       const lab = el.closest('div') && $('label', el.closest('div'));
       return { el, rot: lab ? lab.textContent.replace(/\s*\*$/, '') : el.name };
@@ -520,19 +616,19 @@ const Dispensa = {
    * ligar/desligar o modo, para um campo não sumir enquanto a pessoa digita nele. */
   aplicarModo() {
     const falta = new Set(this.faltando().map(x => x.el));
+    const ia = new Set((this.atual && this.atual.iaCampos) || []);   /* o que veio da IA fica à vista para revisão */
     $$('#formDisp details.secao').forEach(d => {
       if (d.id === 'secOrg') { d.classList.toggle('hidden', this.soFalta && !$('#dispOrg .alerta')); return; }
       let n = 0;
       $$('[name]', d).forEach(el => {
         const w = el.closest('div'); if (!w || w === d) return;
-        const tem = falta.has(el);
+        const tem = falta.has(el) || ia.has(el.name);
         if (tem) n++;
         w.classList.toggle('oculto', this.soFalta && !tem);
       });
       d.classList.toggle('hidden', this.soFalta && !n);
-      if (this.soFalta && n) d.open = true;
+      if (n) d.open = true;
     });
-    $('#cardIA').classList.toggle('hidden', this.soFalta);
   },
 
   escolher(campo, valor) {
@@ -566,51 +662,6 @@ const Dispensa = {
     const txt = textoFinal(this.atual, k, textosPadrao(this.atual));
     navigator.clipboard.writeText(txt).then(() => toast('Texto copiado. Cole no campo do Compras.gov.br.'),
       () => toast('Não foi possível copiar. Selecione o texto e use Ctrl+C.', true));
-  },
-
-  /* Pedido para colar no claude.ai: dados do processo + estilo da última dispensa. */
-  prompt() {
-    const P = this.atual, C = DB.dados.dispCfg || {};
-    const pad = textosPadrao(P);
-    const dados = {
-      OM: C.om, tipo_do_objeto: P.tipoObjeto, servico: P.servicoTitulo, equipamento: P.alvo, identificacao_tecnica: P.identificacao,
-      funcao_a_bordo: P.funcao, carater: P.carater, constatado: P.defeitos, consequencias: P.consequencias,
-      servicos: linhasDe(P.servicos), materiais_incluidos: linhasDe(P.materiais), fora_do_escopo: linhasDe(P.foraEscopo),
-      referencias: P.referencias, catalogo: (P.catTipo || '') + ' ' + (P.codigo || ''), unidade: P.unidade, quantidade: P.qtd,
-      valor_estimado: P.valor, pesquisa_de_precos: P.pesquisaNum, empresa_especializada_em: P.area, local_de_execucao: C.local
-    };
-    return 'Você é Chefe de Máquinas da Marinha do Brasil e vai redigir os textos de uma dispensa eletrônica (art. 75, II, da Lei nº 14.133/2021) ' +
-      'para os campos do Compras.gov.br. Siga o estilo da última dispensa da Divisão de Máquinas: linguagem técnica e formal, ' +
-      'frases completas, especificação detalhada por alíneas a), b), c)… com o que a contratada deve fazer, medir e testar, ' +
-      'referência aos manuais do fabricante, vedação de marca ("originais ou tecnicamente equivalentes") e nada inventado ' +
-      'sobre o equipamento que não esteja nos dados ou nos manuais que eu anexar.\n\n' +
-      'DADOS DO PROCESSO (JSON):\n' + JSON.stringify(dados, null, 2) + '\n\n' +
-      'RASCUNHO ATUAL (melhore, não precisa manter):\n' + CAMPOS_IA.map(k => '### ' + k + '\n' + pad[k]).join('\n\n') + '\n\n' +
-      'Responda APENAS com um JSON válido, sem comentários, com estas chaves (texto puro, quebras de linha com \\n):\n' +
-      '{\n' + CAMPOS_IA.map(k => '  "' + k + '": "..."').join(',\n') + '\n}\n\n' +
-      'Significado das chaves: necessidade = justificativa (o equipamento, o que foi constatado, por que é essencial, o que será feito, ' +
-      'e o parágrafo final de enquadramento no art. 75, II); descricaoSucinta = objeto em um parágrafo terminando com "(CATSER código – qtd unidade)"; ' +
-      'requisitos = item 1.1 do TR com a especificação técnica mínima em alíneas; solucao = descrição da solução como um todo, ciclo da ' +
-      'contratação e o que não integra o objeto; quantidades = estimativa das quantidades e o que está incluído no preço global; ' +
-      'parcelamento = justificativa do item único; beneficiosTxt e providencias = listas em alíneas; impactos = impactos ambientais ' +
-      'e mitigação; avisoItem = resumo do item para o Aviso.';
-  },
-
-  aplicarIA() {
-    let txt = $('#dJson').value.trim();
-    if (!txt) { toast('Cole a resposta da IA primeiro.', true); return; }
-    txt = txt.replace(/^```(json)?/i, '').replace(/```$/, '').trim();
-    let o;
-    try { o = JSON.parse(txt); } catch (e) { toast('A resposta não é um JSON válido: ' + e.message, true); return; }
-    let n = 0;
-    this.atual.textos = this.atual.textos || {};
-    CAMPOS_IA.forEach(k => {
-      if (typeof o[k] === 'string' && o[k].trim()) { this.atual.textos[k] = { texto: o[k].trim(), origem: 'ia' }; n++; }
-    });
-    if (!n) { toast('Nenhuma das chaves esperadas veio na resposta.', true); return; }
-    $('#dJson').value = '';
-    this.gravar();
-    toast(n + ' textos da IA aplicados. Revise os marcados com IA.');
   },
 
   /* ---------- Word ---------- */
@@ -652,8 +703,9 @@ const Dispensa = {
     const P = this.atual, C = DB.dados.dispCfg || {}, pad = textosPadrao(P);
     const { p, tabela } = Docx;
     let corpo = '';
-    [['etp', 'ESTUDO TÉCNICO PRELIMINAR'], ['tr', 'TERMO DE REFERÊNCIA'], ['aviso', 'AVISO DE CONTRATAÇÃO DIRETA']].forEach(([doc, tit], i) => {
-      corpo += p(tit, { alinha: 'centro', b: true, antes: i ? 480 : 0, depois: 0 }) +
+    const nDoc = k => P[k] || P.numeroDispensa;
+    [['etp', 'ESTUDO TÉCNICO PRELIMINAR', nDoc('numETP')], ['tr', 'TERMO DE REFERÊNCIA', nDoc('numTR')], ['aviso', 'AVISO DE CONTRATAÇÃO DIRETA', nDoc('numAviso')]].forEach(([doc, tit, nn], i) => {
+      corpo += p(tit + (nn ? ' Nº ' + nn : ''), { alinha: 'centro', b: true, antes: i ? 480 : 0, depois: 0 }) +
         p((C.om || '').toUpperCase() + (P.processoNum ? ' · Processo ' + P.processoNum : ''), { alinha: 'centro', depois: 240 });
       CAMPOS[doc].forEach(([k, rot]) => {
         corpo += p(rot, { b: true, antes: 160 });
@@ -671,10 +723,9 @@ const Dispensa = {
     $('#btnFecharDisp').onclick = () => this.fechar();
     $('#btnTodosDocx').onclick = () => Processo.baixarTudo();
     $('#btnSalvarPacote').onclick = () => Pacotes.salvarAtual();
-    $('#btnAplicarIA').onclick = () => this.aplicarIA();
-    $('#btnPromptIA').onclick = () => navigator.clipboard.writeText(this.prompt())
-      .then(() => toast('Pedido copiado. Cole no claude.ai, anexe as páginas do manual e traga o JSON de volta.'),
-        () => { $('#dJson').value = this.prompt(); toast('Não foi possível copiar; o pedido foi posto na caixa abaixo.', true); });
+    $('#btnUsarItens').onclick = () => this.usarItens();
+    $('#btnNovoItem').onclick = () => this.novoItem();
+    DispIA.ligar();
 
     const f = $('#formDisp');
     let espera;
@@ -685,6 +736,11 @@ const Dispensa = {
         ['alvo', 'identificacao', 'area', 'funcao'].forEach(k => {
           if (!f.elements[k].value && sug[k]) f.elements[k].value = sug[k];
         });
+      }
+      if (e.target.name && (this.atual.iaCampos || []).includes(e.target.name)) {
+        this.atual.iaCampos = this.atual.iaCampos.filter(k => k !== e.target.name);
+        e.target.classList.remove('daIA');
+        const lab = e.target.closest('div') && $('label', e.target.closest('div')); if (lab) lab.classList.remove('rotIA');
       }
       Object.assign(this.atual, lerForm(f));
       clearTimeout(espera);
@@ -704,15 +760,21 @@ const Dispensa = {
       el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
     $('#tabDispItens').addEventListener('change', e => { if (e.target.dataset.item != null) this.mudarItem(e.target); });
+    $('#dispCriterio').addEventListener('click', e => {
+      const b = e.target.closest('[data-criterio]'); if (!b || !this.atual) return;
+      this.atual.criterio = b.dataset.criterio; ordenarPorGrupo(this.atual); this.gravar();
+    });
 
     $('#tab-dispensa').addEventListener('click', e => {
       const b = e.target.closest('button'); if (!b) return;
       const d = b.dataset;
       if (d.abrirdisp) this.abrir(d.abrirdisp);
+      else if (d.soldisp) { irPara('obtencao', 'solemp'); Obt.novaSolemp(d.soldisp); }
       else if (d.dupdisp) {
         const orig = this.lista().find(P => P.id === d.dupdisp);
         const copia = JSON.parse(JSON.stringify(orig));
         Object.assign(copia, { id: novoId('disp'), numeroDispensa: '', processoNum: '', pesquisaNum: '', parCodigo: '', parData: '',
+          numETP: '', numAviso: '', numTR: '', dataSessao: '', iaCampos: [],
           dataCapa: hojeIso(), criado: new Date().toISOString() });
         this.lista().push(copia); this.abrir(copia.id); this.gravar();
         toast('Cópia criada. Ajuste o NUP, a pesquisa de preços e o PAR.');
@@ -734,8 +796,15 @@ const Dispensa = {
       else if (d.salvartexto) this.salvarTexto(d.salvartexto);
       else if (d.restaurar) { delete this.atual.textos[d.restaurar]; this.gravar(); }
       else if (d.tiraritem) {
-        if (this.atual.itens.length === 1) { toast('A dispensa precisa de pelo menos um item.', true); return; }
-        this.atual.itens.splice(Number(d.tiraritem), 1); this.totalItens();
+        const P = this.atual;
+        if (P.itens.length === 1) {
+          if (!confirmar('Tirar o último item e voltar à dispensa de item único?')) return;
+          const i = P.itens[0];
+          Object.assign(P, { codigo: i.catmat || P.codigo, unidade: i.un || P.unidade, qtd: String(i.qtd || 1),
+            valor: ((num(i.qtd) || 0) * (num(i.preco) || 0)).toFixed(2).replace('.', ',') });
+          delete P.itens; preencherForm($('#formDisp'), P); this.gravar(); return;
+        }
+        P.itens.splice(Number(d.tiraritem), 1); this.totalItens();
       }
     });
   }
