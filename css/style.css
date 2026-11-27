@@ -369,3 +369,11 @@ a.mini{display:inline-block;text-decoration:none;margin-left:4px}
 #solBusca,#ataBusca{flex:1;min-width:min(320px,100%)}
 #tab-obtencao .cab .acoes{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 #tab-obtencao .cab .acoes select{width:auto}
+
+/* ---- pesquisa de preços ---- */
+#ppPasso2.apagado{opacity:.45;pointer-events:none}
+#tabPpFontes tr.apagado td{opacity:.55}
+#ppColar{width:100%;min-height:44px;font-family:var(--mono);font-size:12px}
+ol.passos{margin:6px 0 8px;padding-left:20px}
+#ppCabe details{margin-top:8px}
+#ppCabe summary{cursor:pointer;color:var(--dest)}
