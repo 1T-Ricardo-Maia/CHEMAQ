@@ -28,13 +28,14 @@ const Docx = (() => {
   }
 
   /* Tabela: linhas = [[cel, cel], ...]; a primeira linha vai em negrito. */
-  function tabela(linhas, larguras) {
+  function tabela(linhas, larguras, op) {
+    const al = (op && op.alinha) || 'centro';
     const total = larguras.reduce((a, b) => a + b, 0);
     return '<w:tbl><w:tblPr><w:tblW w:w="' + total + '" w:type="dxa"/><w:tblBorders>' +
       ['top', 'left', 'bottom', 'right', 'insideH', 'insideV'].map(l => '<w:' + l + ' w:val="single" w:sz="4" w:space="0" w:color="000000"/>').join('') +
       '</w:tblBorders><w:tblLayout w:type="fixed"/></w:tblPr><w:tblGrid>' + larguras.map(w => '<w:gridCol w:w="' + w + '"/>').join('') + '</w:tblGrid>' +
       linhas.map((l, i) => '<w:tr>' + l.map((c, j) => '<w:tc><w:tcPr><w:tcW w:w="' + larguras[j] + '" w:type="dxa"/></w:tcPr>' +
-        p(String(c), { alinha: 'centro', b: i === 0, depois: 40, tam: 18 }) + '</w:tc>').join('') + '</w:tr>').join('') + '</w:tbl>' + p('');
+        p(String(c), { alinha: i === 0 ? 'centro' : al, b: i === 0, depois: 40, tam: 18 }) + '</w:tc>').join('') + '</w:tr>').join('') + '</w:tbl>' + p('');
   }
 
   function documento(corpo) {
@@ -63,12 +64,13 @@ const Docx = (() => {
     for (let i = 0; i < bytes.length; i++) c = tabelaCrc[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
     return (c ^ 0xFFFFFFFF) >>> 0;
   }
-  function zip(arquivos) {
+  /* arquivos: { nome: string | Uint8Array } → bytes do .zip */
+  function zipBytes(arquivos) {
     const enc = new TextEncoder();
     const partes = [], central = [];
     let desloc = 0;
     Object.entries(arquivos).forEach(([nome, conteudo]) => {
-      const nb = enc.encode(nome), dados = enc.encode(conteudo), crc = crc32(dados);
+      const nb = enc.encode(nome), dados = typeof conteudo === 'string' ? enc.encode(conteudo) : conteudo, crc = crc32(dados);
       const loc = new DataView(new ArrayBuffer(30));
       loc.setUint32(0, 0x04034b50, true); loc.setUint16(4, 20, true); loc.setUint16(6, 0x0800, true);
       loc.setUint32(14, crc, true); loc.setUint32(18, dados.length, true); loc.setUint32(22, dados.length, true);
@@ -86,13 +88,19 @@ const Docx = (() => {
     const n = Object.keys(arquivos).length;
     fim.setUint32(0, 0x06054b50, true); fim.setUint16(8, n, true); fim.setUint16(10, n, true);
     fim.setUint32(12, tamCentral, true); fim.setUint32(16, desloc, true);
-    return new Blob([...partes, ...central, new Uint8Array(fim.buffer)],
-      { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+    const todas = [...partes, ...central, new Uint8Array(fim.buffer)];
+    const out = new Uint8Array(todas.reduce((a, b) => a + b.length, 0));
+    let o = 0;
+    todas.forEach(b => { out.set(b, o); o += b.length; });
+    return out;
   }
 
+  function bytes(corpoXml) {
+    return zipBytes(Object.assign({}, ARQS_FIXOS, { 'word/document.xml': documento(corpoXml) }));
+  }
   function gerar(corpoXml) {
-    return zip(Object.assign({}, ARQS_FIXOS, { 'word/document.xml': documento(corpoXml) }));
+    return new Blob([bytes(corpoXml)], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
   }
 
-  return { p, tabela, gerar, crc32 };
+  return { p, tabela, gerar, bytes, zipBytes, crc32 };
 })();

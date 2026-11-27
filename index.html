@@ -251,91 +251,143 @@
   <div class="card" id="cardDispLista">
     <div class="cab"><h2>Dispensas eletrônicas <span class="n" id="nDisp">0</span></h2>
       <div class="acoes"><button class="btn" id="btnNovaDisp">Nova dispensa</button></div></div>
-    <p class="hint">Escolha o equipamento, descreva o que foi constatado e o que precisa ser feito. O CHEMAQ monta o DFD em Word e os textos do ETP, do TR e do Aviso no formato dos campos do Compras.gov.br, no mesmo padrão da sua última dispensa (Proc. 63387.000262/2026-44). Os dados fixos (OM, UASG, responsáveis) ficam em Configurações.</p>
+    <p class="hint">Cada dispensa guardada pode ser reaberta para refazer os documentos ou duplicada como base de uma nova. O gerador monta as 11 peças do processo (capa, autuação, DFD, ETP, atos, autorização, mapa de riscos, declaração orçamentária, Aviso e TR) no padrão da Dispensa 26/2026. Os pacotes de serviço por equipamento ficam em <code>dados/pacotes.json</code> e crescem a cada dispensa salva como pacote.</p>
+    <div class="acoes"><button class="btn ghost" id="btnExpPacotes">Exportar pacotes (.json)</button>
+      <label class="btn ghost arquivo">Importar pacotes<input type="file" id="inPacotes" accept=".json,application/json"></label></div>
     <div class="tabela-wrap"><table class="tabela" id="tabDisp">
       <thead><tr><th>Processo</th><th>Objeto</th><th class="num">Valor</th><th>Atualizado</th><th></th></tr></thead>
       <tbody></tbody></table></div>
     <p class="vazio hidden" id="vazioDisp">Nenhuma dispensa ainda. Também dá para começar de uma OS corretiva, pelo botão “Dispensa”.</p>
   </div>
 
-  <div id="dispEditor" class="hidden">
+  <div id="dispEditor" class="hidden gerador">
+    <div class="card dest">
+      <div class="cab"><h2>Gerador de dispensa eletrônica</h2>
+        <div class="acoes"><button class="btn ghost" id="btnFecharDisp" type="button">Fechar</button></div></div>
+      <div class="prog"><span class="rot">Preenchimento</span><b id="dispProgN">0/0 · 0%</b></div>
+      <div class="barra"><i id="dispProgBarra"></i></div>
+      <p class="hint">Um formulário só alimenta as 11 peças do processo, na ordem dos autos: capa, autuação, DFD, ETP, ato de aprovação do ETP, autorização de abertura, mapa de riscos, declaração orçamentária, aviso, TR e ato de aprovação do TR. Os dados fixos (OM, UASG, ordenador, responsável) vêm de Configurações.</p>
+    </div>
+
     <div class="card hidden" id="dispItens">
       <div class="passo">Itens</div>
       <h2>Itens da dispensa</h2>
-      <p class="hint">Dispensa de material com vários itens, criada na aba Materiais. Ajuste a quantidade e o preço aqui; os textos e o valor total se atualizam. Os campos de diagnóstico do Passo 2 não são usados neste tipo.</p>
+      <p class="hint">Dispensa de material com vários itens, criada na aba Material. Ajuste a quantidade e o preço aqui; os textos e o valor total se atualizam.</p>
       <div class="tabela-wrap"><table class="tabela" id="tabDispItens">
         <thead><tr><th class="num">Item</th><th>Material</th><th class="num">Qtd</th><th class="num">Unitário (R$)</th><th class="num">Total (R$)</th><th></th></tr></thead>
         <tbody></tbody></table></div>
     </div>
+
     <form id="formDisp" autocomplete="off">
       <div class="card">
         <div class="passo">Passo 1</div>
-        <h2>O que vai ser contratado</h2>
+        <h2>O equipamento e o que vai ser feito</h2>
+        <p class="hint">Escolha o equipamento (ou descreva). Os pacotes de serviço que servem para ele aparecem abaixo; um clique preenche o serviço, o escopo, o catálogo e os prazos.</p>
         <div class="row">
           <div><label>Equipamento</label><select name="equipId" id="dEquip"></select></div>
-          <div><label>Tipo do objeto (DFD)</label><select name="tipoObjeto">
-            <option>Serviço não continuado</option><option>Serviço continuado SEM dedicação exclusiva de mão de obra</option>
-            <option>Serviço continuado COM dedicação exclusiva de mão de obra</option><option>Material de consumo</option>
-            <option>Material permanente/equipamento</option></select></div>
-        </div>
-        <div><label>Serviço (como aparece no objeto)</label><input type="text" name="servicoTitulo" placeholder="revisão do sistema de arrefecimento"></div>
-        <div class="row">
           <div><label>Equipamento por extenso, com artigo</label><input type="text" name="alvo" placeholder="o motor de combustão principal de boreste (MCP BE)"></div>
-          <div><label>Identificação técnica</label><input type="text" name="identificacao" placeholder="motor diesel marítimo MTU 6R 199 TB60, de 294 kW (400 CV) a 1.850 rpm"></div>
         </div>
-        <div class="row">
-          <div><label>Função a bordo</label><input type="text" name="funcao" placeholder="é um dos dois únicos meios de propulsão da embarcação"></div>
-          <div><label>Empresa especializada em</label><input type="text" name="area" placeholder="manutenção de motores diesel marítimos"></div>
-          <div><label>Caráter</label><select name="carater"><option>preventivo e corretivo</option><option>corretivo</option><option>preventivo</option></select></div>
+        <label>Pacote de serviço</label>
+        <div class="opcoes" id="dispPacotes"></div>
+        <label>Tipo da dispensa</label>
+        <div class="opcoes duas" id="dispTipo">
+          <button type="button" class="opcao" data-tipo="CATSER"><b>Serviço</b><span>Coluna CATSER · DFD só com opções de serviço</span></button>
+          <button type="button" class="opcao" data-tipo="CATMAT"><b>Material</b><span>Coluna CATMAT · DFD só com opções de material</span></button>
         </div>
+        <label>Categoria — marca o quadro do DFD</label>
+        <div class="opcoes" id="dispCat"></div>
+        <select name="tipoObjeto" class="hidden" tabindex="-1" aria-hidden="true">
+          <option>Serviço não continuado</option><option>Serviço continuado SEM dedicação exclusiva de mão de obra</option>
+          <option>Serviço continuado COM dedicação exclusiva de mão de obra</option><option>Material de consumo</option>
+          <option>Material permanente/equipamento</option></select>
+        <select name="catTipo" class="hidden" tabindex="-1" aria-hidden="true"><option>CATSER</option><option>CATMAT</option></select>
       </div>
 
       <div class="card">
         <div class="passo">Passo 2</div>
-        <h2>Diagnóstico e escopo</h2>
-        <div><label>O que a Divisão de Máquinas constatou</label><textarea name="defeitos" rows="3" placeholder="vazamento na rede de alimentação de óleo do turbocompressor e degradação da bomba de água bruta"></textarea></div>
-        <div><label>Consequência se não for feito</label><textarea name="consequencias" rows="2"></textarea></div>
-        <div class="row">
-          <div><label>Serviços a executar (um por linha)</label><textarea name="servicos" rows="6" placeholder="substituição da bomba de água bruta por unidade nova&#10;substituição dos mangotes do sistema de arrefecimento"></textarea></div>
-          <div><label>Peças e materiais incluídos (um por linha)</label><textarea name="materiais" rows="6" placeholder="bomba de água bruta completa&#10;mangotes e abraçadeiras"></textarea></div>
-        </div>
-        <div class="row">
-          <div><label>Fora do escopo (um por linha)</label><textarea name="foraEscopo" rows="3" placeholder="a retífica geral do motor"></textarea></div>
-          <div><label>Benefícios esperados (um por linha)</label><textarea name="beneficios" rows="3"></textarea></div>
-        </div>
-        <div><label>Manuais e desenhos de referência</label><input type="text" name="referencias" placeholder="o Manual de Operação e Manutenção do motor e o desenho de instalação nº ..."></div>
-      </div>
+        <h2>Campos do processo</h2>
+        <p class="hint">Tudo é editável. Campos de texto deixados em branco usam o texto automático, que aparece em cinza dentro da caixa.</p>
 
-      <div class="card">
-        <div class="passo">Passo 3</div>
-        <h2>Dados do processo</h2>
-        <div class="row">
-          <div><label>Nº do processo (NUP)</label><input type="text" name="processoNum" placeholder="63387.000000/2026-00"></div>
-          <div class="estreito"><label>Pesquisa de preços nº</label><input type="text" name="pesquisaNum" placeholder="41/2026"></div>
-          <div class="estreito"><label>Catálogo</label><select name="catTipo"><option>CATSER</option><option>CATMAT</option></select></div>
-          <div class="estreito"><label>Código</label><input type="text" name="codigo" placeholder="13463"></div>
-        </div>
-        <div class="row">
-          <div class="estreito"><label>Unidade</label><input type="text" name="unidade" placeholder="SERV"></div>
-          <div class="estreito"><label>Quantidade</label><input type="number" min="1" step="1" name="qtd"></div>
-          <div><label>Valor estimado total (R$)</label><input type="text" name="valor" placeholder="50411,88" inputmode="decimal"></div>
-          <div class="estreito"><label>Prioridade</label><select name="prioridade"><option>ALTA</option><option>MÉDIA</option><option>BAIXA</option></select></div>
-          <div><label>Mês da conclusão</label><select name="mes"></select></div>
-        </div>
-        <div class="row">
-          <div class="estreito"><label>Código PAR</label><input type="text" name="parCodigo" placeholder="0054/2026"></div>
-          <div class="estreito"><label>Inclusão no PAR em</label><input type="date" name="parData"></div>
-          <div class="estreito"><label>Prazo de execução (dias)</label><input type="number" min="1" name="prazo"></div>
-          <div class="estreito"><label>Vigência (meses)</label><input type="number" min="1" name="vigencia"></div>
-          <div class="estreito"><label>Garantia (dias)</label><input type="number" min="0" name="garantia"></div>
-        </div>
+        <details class="secao" open>
+          <summary><span><b>Identificação do processo</b><small>Capa, autuação, autorização e nome dos arquivos</small></span><i class="cont"></i></summary>
+          <div class="row">
+            <div class="estreito"><label>Nº da dispensa</label><input type="text" name="numeroDispensa" placeholder="26/2026"></div>
+            <div><label>Nº do processo (NUP)</label><input type="text" name="processoNum" placeholder="63387.000000/2026-00"></div>
+            <div class="estreito"><label>Data da capa</label><input type="date" name="dataCapa"></div>
+          </div>
+          <div><label>Quem rubrica as folhas (Termo de Autuação)</label><input type="text" name="comissionado"></div>
+        </details>
+
+        <details class="secao" open>
+          <summary><span><b>Objeto</b><small>Assunto da capa, finalidade dos atos e o objeto do DFD, ETP, TR e Aviso</small></span><i class="cont"></i></summary>
+          <div><label>Serviço (como aparece no objeto)</label><input type="text" name="servicoTitulo" placeholder="revisão dos sistemas de lubrificação e de arrefecimento"></div>
+          <div class="row">
+            <div><label>Identificação técnica</label><input type="text" name="identificacao" placeholder="motor diesel marítimo MTU 6R 199 TB60, de 294 kW (400 CV) a 1.850 rpm"></div>
+            <div><label>Função a bordo</label><input type="text" name="funcao" placeholder="é um dos dois únicos meios de propulsão da embarcação"></div>
+          </div>
+          <div class="row">
+            <div><label>Empresa especializada em</label><input type="text" name="area" placeholder="manutenção de motores diesel marítimos"></div>
+            <div class="estreito"><label>Caráter</label><select name="carater"><option>preventivo e corretivo</option><option>corretivo</option><option>preventivo</option></select></div>
+          </div>
+          <div><label>Assunto (capa e declaração)</label><textarea name="assunto" rows="2"></textarea></div>
+          <div><label>Finalidade (atos de aprovação e autorização)</label><textarea name="finalidade" rows="2"></textarea></div>
+          <div><label>Contribui para (declaração orçamentária)</label><input type="text" name="contribuicao"></div>
+        </details>
+
+        <details class="secao">
+          <summary><span><b>Diagnóstico e escopo</b><small>Justificativa, especificação do TR e itens do Aviso</small></span><i class="cont"></i></summary>
+          <div><label>O que a Divisão de Máquinas constatou</label><textarea name="defeitos" rows="3" placeholder="vazamento na rede de alimentação de óleo do turbocompressor e degradação da bomba de água bruta"></textarea></div>
+          <div><label>Consequência se não for feito</label><textarea name="consequencias" rows="2"></textarea></div>
+          <div class="row">
+            <div><label>Serviços a executar (um por linha)</label><textarea name="servicos" rows="6"></textarea></div>
+            <div><label>Peças e materiais incluídos (um por linha)</label><textarea name="materiais" rows="6"></textarea></div>
+          </div>
+          <div class="row">
+            <div><label>Fora do escopo (um por linha)</label><textarea name="foraEscopo" rows="3"></textarea></div>
+            <div><label>Benefícios esperados (um por linha)</label><textarea name="beneficios" rows="3"></textarea></div>
+          </div>
+          <div><label>Manuais e desenhos de referência</label><input type="text" name="referencias" placeholder="o Manual de Operação e Manutenção do motor e o desenho de instalação nº ..."></div>
+        </details>
+
+        <details class="secao">
+          <summary><span><b>Itens, valor e prazos</b><small>Tabela do TR, valor por extenso e prazos</small></span><i class="cont"></i></summary>
+          <div class="row">
+            <div class="estreito"><label>Código CATSER/CATMAT</label><input type="text" name="codigo" placeholder="13463"></div>
+            <div class="estreito"><label>Unidade</label><input type="text" name="unidade" placeholder="SERV"></div>
+            <div class="estreito"><label>Quantidade</label><input type="number" min="1" step="1" name="qtd"></div>
+            <div class="estreito"><label>Pesquisa de preços nº</label><input type="text" name="pesquisaNum" placeholder="41/2026"></div>
+          </div>
+          <div><label>Valor estimado total (R$)</label><input type="text" name="valor" placeholder="50411,88" inputmode="decimal">
+            <div class="sub" id="valorExtenso"></div></div>
+          <div class="row">
+            <div class="estreito"><label>Mês da conclusão</label><select name="mes"></select></div>
+            <div class="estreito"><label>Prioridade</label><select name="prioridade"><option>ALTA</option><option>MÉDIA</option><option>BAIXA</option></select></div>
+            <div class="estreito"><label>Prazo de execução (dias)</label><input type="number" min="1" name="prazo"></div>
+            <div class="estreito"><label>Vigência (meses)</label><input type="number" min="1" name="vigencia"></div>
+            <div class="estreito"><label>Garantia (dias)</label><input type="number" min="0" name="garantia"></div>
+          </div>
+        </details>
+
+        <details class="secao">
+          <summary><span><b>PAR — Programa de Aplicação de Recursos</b><small>ETP 11 e TR 2.2</small></span><i class="cont"></i></summary>
+          <div class="row">
+            <div class="estreito"><label>Código PAR</label><input type="text" name="parCodigo" placeholder="0054/2026"></div>
+            <div class="estreito"><label>Inclusão no PAR em</label><input type="date" name="parData"></div>
+          </div>
+        </details>
+
+        <details class="secao" id="secOrg">
+          <summary><span><b>Organização militar e assinaturas</b><small>Vem de Configurações</small></span><i class="cont"></i></summary>
+          <div id="dispOrg" class="lidaCfg"></div>
+          <button type="button" class="mini" data-ir="config">Editar em Configurações</button>
+        </details>
       </div>
     </form>
 
     <div class="card">
-      <div class="passo">Passo 4 · opcional</div>
+      <div class="passo">Passo 3 · opcional</div>
       <h2>Redação com IA</h2>
-      <p class="hint">Os textos já saem prontos a partir dos campos acima. Para uma redação técnica mais completa, como a da sua última dispensa, copie o pedido, cole no claude.ai junto com as páginas do manual e traga a resposta de volta. Não precisa de chave de API.</p>
+      <p class="hint">Os textos já saem prontos a partir dos campos acima. Para uma redação técnica mais completa, copie o pedido, cole no claude.ai junto com as páginas do manual e traga a resposta de volta. Não precisa de chave de API.</p>
       <div class="acoes"><button class="btn ghost" id="btnPromptIA">Copiar pedido para a IA</button></div>
       <div class="ia"><label for="dJson">Resposta da IA (JSON)</label>
         <textarea id="dJson" rows="4" placeholder='{ "necessidade": "...", "requisitos": "...", ... }'></textarea>
@@ -343,13 +395,22 @@
     </div>
 
     <div class="card">
-      <div class="passo">Passo 5</div>
-      <div class="cab"><h2>Documentos</h2>
-        <div class="acoes"><button class="btn" id="btnDfdDocx">Baixar DFD (.docx)</button>
-          <button class="btn ghost" id="btnTodosDocx">Baixar ETP, TR e Aviso (.docx)</button>
-          <button class="btn ghost" id="btnFecharDisp">Fechar</button></div></div>
+      <div class="passo">Passo 4</div>
+      <h2>Gerar os documentos</h2>
+      <p class="hint">Clique numa peça para baixar só ela. ETP, Aviso e TR são preenchidos no Compras.gov.br: os textos de cada campo estão logo abaixo, prontos para copiar.</p>
+      <div id="dispPecas" class="pecas"></div>
+      <div class="acoes" style="margin-top:12px">
+        <button class="btn" id="btnTodosDocx">Gerar os 11 documentos (.zip)</button>
+        <button class="btn ghost" id="btnSalvarPacote">Salvar como pacote de serviço</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="passo">Textos</div>
+      <h2>Textos de cada documento</h2>
       <div class="subtabs docAbas" role="tablist">
-        <button data-doc="dfd" aria-selected="true">DFD</button>
+        <button data-doc="atos" aria-selected="true">Capa e atos</button>
+        <button data-doc="dfd" aria-selected="false">DFD</button>
         <button data-doc="etp" aria-selected="false">ETP</button>
         <button data-doc="tr" aria-selected="false">Termo de Referência</button>
         <button data-doc="aviso" aria-selected="false">Aviso</button>
@@ -405,8 +466,14 @@
       <div class="row">
         <div><label>UGE</label><input type="text" name="uge" placeholder="Centro de Intendência da Marinha em Belém"></div>
         <div><label>Quem elabora o PAR</label><input type="text" name="orgPar" placeholder="Centro de Hidrografia e Navegação do Norte (CHN-4)"></div>
+        <div><label>Obtenção (mapa de riscos)</label><input type="text" name="obtencao" placeholder="Divisão de Obtenção do CeIMBe"></div>
       </div>
     </form>
+  </div>
+  <div class="card">
+    <h2>Modelos dos atos da dispensa</h2>
+    <p class="hint">Quando você ajusta o texto de um ato numa dispensa e clica em “Salvar como modelo”, ele aparece aqui e passa a valer para as próximas, com os dados de cada uma.</p>
+    <div id="listaModelos"></div>
   </div>
   <div class="card">
     <h2>Backup</h2>
@@ -575,6 +642,8 @@
 <script src="js/combustivel.js"></script>
 <script src="js/docx.js"></script>
 <script src="js/dispensa.js"></script>
+<script src="js/processo.js"></script>
+<script src="js/pacotes.js"></script>
 <script src="js/materiais.js"></script>
 <script src="js/painel.js"></script>
 <script src="js/config.js"></script>

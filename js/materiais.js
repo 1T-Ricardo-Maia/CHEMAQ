@@ -327,6 +327,7 @@ function textosItens(P, t) {
   const objeto = 'Aquisição de ' + (P.servicoTitulo || 'sobressalentes') + (soBaterias
     ? ' para a partida dos motores e o circuito de 24 V '
     : ' para a manutenção preventiva e corretiva dos sistemas de propulsão, geração de energia, governo e habitabilidade ') + contr('o ' + om);
+  t._assunto = objeto;
   const lista = itens.map((i, n) => (n + 1) + '. ' + i.nome + ' – ' + i.qtd + ' unidade' + (i.qtd > 1 ? 's' : ''));
 
   t.necessidade = 'A presente necessidade diz respeito à ' + objeto.charAt(0).toLowerCase() + objeto.slice(1) + ', ' +
