@@ -97,8 +97,13 @@ const Comb = {
   milhasDe(l) {
     const p = num(l.milhas);
     if (p != null) return p;
-    const t = l.trecho ? this.trecho(l.trecho) : null;
-    return t ? num(t.milhas) : null;
+    return this.milhasTrecho(l.trecho);
+  },
+  /* Milhas de um trecho: a digitada pelo usuário vale mais; senão, a da tabela de distâncias. */
+  milhasTrecho(nome) {
+    if (!nome) return null;
+    const t = this.trecho(nome);
+    return t && num(t.milhas) != null ? num(t.milhas) : Dist.milhas(nome);
   },
   garantirTrecho(nome) {
     if (!nome || this.trecho(nome)) return;
@@ -186,13 +191,14 @@ const Comb = {
   renderTrechos() {
     const est = this.estatTrechos();
     $('#nTrechos').textContent = est.lista.length;
-    $('#tabTrechos tbody').innerHTML = est.lista.map(g =>
-      '<tr><td>' + esc(g.t.nome) + (g.ultima ? '<div class="sub">último em ' + dataBr(g.ultima) + '</div>' : '') + '</td>' +
+    $('#tabTrechos tbody').innerHTML = est.lista.map(g => {
+      const tab = Dist.milhas(g.t.nome), proprio = num(g.t.milhas) != null;
+      return '<tr><td>' + esc(g.t.nome) + (g.ultima ? '<div class="sub">último em ' + dataBr(g.ultima) + '</div>' : '') + '</td>' +
       '<td class="num">' + g.n + '</td><td class="num">' + (g.media != null ? fmt(g.media) : '—') + '</td>' +
-      '<td class="num"><input class="inNum" type="number" step="any" min="0" data-milhas="' + esc(g.t.nome) + '" value="' + esc(g.t.milhas || '') + '" placeholder="nm" aria-label="Milhas de ' + esc(g.t.nome) + '"></td>' +
+      '<td class="num">' + campoMilhas('data-milhas="' + esc(g.t.nome) + '"', proprio ? g.t.milhas : tab, !proprio && tab != null, tab, 'Milhas de ' + g.t.nome) + '</td>' +
       '<td class="num">' + (g.lpm != null ? fmt(g.lpm, 1) : '—') + '</td>' +
-      '<td class="botoes">' + (g.t.id ? '<button class="mini del" data-deltrecho="' + g.t.id + '">Excluir</button>' : '') + '</td></tr>'
-    ).join('');
+      '<td class="botoes">' + (g.t.id ? '<button class="mini del" data-deltrecho="' + g.t.id + '">Excluir</button>' : '') + '</td></tr>';
+    }).join('');
     $('#vazioTrechos').classList.toggle('hidden', est.lista.length > 0);
     $('#listaTrechos').innerHTML = est.lista.map(g => '<option value="' + esc(g.t.nome) + '">').join('');
   },
@@ -291,11 +297,13 @@ const Comb = {
 
   renderPlano() {
     const p = this.plano();
-    $('#planoPernas').innerHTML = p.pernas.map((x, i) =>
-      '<tr data-perna="' + i + '"><td><input type="text" list="listaTrechos" data-pc="trecho" value="' + esc(x.trecho) + '" placeholder="Belém x Breves" aria-label="Trecho ' + (i + 1) + '"></td>' +
-      '<td class="num"><input class="inNum" type="number" step="any" min="0" data-pc="milhas" value="' + esc(x.milhas) + '" placeholder="nm" aria-label="Milhas do trecho ' + (i + 1) + '"></td>' +
+    $('#planoPernas').innerHTML = p.pernas.map((x, i) => {
+      const auto = this.milhasTrecho(x.trecho), proprio = num(x.milhas) != null;
+      return '<tr data-perna="' + i + '"><td><input type="text" list="listaTrechos" data-pc="trecho" value="' + esc(x.trecho) + '" placeholder="Belém x Breves" aria-label="Trecho ' + (i + 1) + '"></td>' +
+      '<td class="num">' + campoMilhas('data-pc="milhas"', proprio ? x.milhas : auto, !proprio && auto != null, auto, 'Milhas do trecho ' + (i + 1), auto != null ? origemMilhas(x.trecho) : '') + '</td>' +
       '<td class="num" data-saida="lpm"></td><td class="num" data-saida="litros"></td>' +
-      '<td class="botoes"><button class="mini del" data-delperna="' + i + '" aria-label="Remover trecho ' + (i + 1) + '">×</button></td></tr>').join('');
+      '<td class="botoes"><button class="mini del" data-delperna="' + i + '" aria-label="Remover trecho ' + (i + 1) + '">×</button></td></tr>';
+    }).join('');
     preencherForm($('#formPlano'), p);
     this.calcPlano();
   },
@@ -308,7 +316,7 @@ const Comb = {
     let milhas = 0, litros = 0, semMedia = 0;
     $$('#planoPernas tr').forEach((tr, i) => {
       const x = p.pernas[i] || {};
-      const nm = num(x.milhas);
+      const nm = num(x.milhas) != null ? num(x.milhas) : this.milhasTrecho(x.trecho);
       const t = x.trecho ? est.lista.find(g => chaveTrecho(g.t.nome) === chaveTrecho(x.trecho)) : null;
       const lpm = t && t.lpm != null ? t.lpm : est.lpm;
       const l = nm && lpm != null ? nm * lpm : null;
@@ -413,8 +421,8 @@ const Comb = {
     const dlg = $('#dlgSondEd'), f = $('form', dlg);
     const l = id ? DB.dados.combustivel.find(x => x.id === id) : { data: hojeIso(), situacao: 'Porto' };
     preencherForm(f, l);
-    const t = l.trecho ? this.trecho(l.trecho) : null;
-    $('[name=milhas]', f).placeholder = t && t.milhas ? t.milhas + ' (do trecho)' : 'nm';
+    const mt = this.milhasTrecho(l.trecho);
+    $('[name=milhas]', f).placeholder = mt != null ? mt + ' (do trecho)' : 'nm';
     f.dataset.id = id || '';
     $('#dlgSondEdTit').textContent = id ? 'Sondagem de ' + dataBr(l.data) : 'Sondagem sem mensagem';
     $('#sondTexto').textContent = l.texto || '';
@@ -626,7 +634,9 @@ const Comb = {
       const inp = e.target.closest('[data-milhas]'); if (!inp) return;
       const nome = inp.dataset.milhas;
       this.garantirTrecho(nome);
-      this.trecho(nome).milhas = inp.value.trim();
+      /* Apagar o campo, ou deixar igual à tabela, volta a seguir a tabela de distâncias. */
+      const v = inp.value.trim(), tab = Dist.milhas(nome);
+      this.trecho(nome).milhas = v === '' || (tab != null && num(v) === tab) ? '' : v;
       DB.salvar();
     });
     $('#tabTrechos').addEventListener('click', e => {
@@ -643,8 +653,15 @@ const Comb = {
       const perna = this.plano().pernas[i];
       perna[inp.dataset.pc] = inp.value;
       if (inp.dataset.pc === 'trecho') {
-        const t = this.trecho(inp.value);
-        if (t && num(t.milhas)) { perna.milhas = t.milhas; $('[data-pc=milhas]', inp.closest('tr')).value = t.milhas; }
+        /* Trecho novo: as milhas voltam a vir do trecho (digitadas na tabela de trechos ou da tabela de distâncias). */
+        perna.milhas = '';
+        const auto = this.milhasTrecho(inp.value), campo = $('[data-pc=milhas]', inp.closest('tr'));
+        campo.value = auto != null ? auto : '';
+        marcarAuto(campo, auto != null ? origemMilhas(inp.value) : '');
+      } else if (inp.dataset.pc === 'milhas') {
+        const auto = this.milhasTrecho(perna.trecho);
+        if (auto != null && num(inp.value) === auto) perna.milhas = '';
+        marcarAuto(inp, perna.milhas === '' && auto != null ? origemMilhas(perna.trecho) : '');
       }
       gravaPlano();
     });
@@ -662,6 +679,22 @@ const Comb = {
     ligarDialogo('#dlgSond', () => this.lancarLidas());
   }
 };
+
+/* Campo de milhas. Quando o valor veio sozinho (tabela de distâncias ou trecho
+ * cadastrado), aparece mais apagado e com a origem embaixo; digitar por cima vale. */
+function campoMilhas(attr, valor, auto, tab, rotulo, origem) {
+  return '<input class="inNum' + (auto ? ' auto' : '') + '" type="number" step="any" min="0" ' + attr + ' value="' + esc(valor == null ? '' : valor) + '" placeholder="nm" aria-label="' + esc(rotulo) + '"' +
+    (tab != null ? ' title="Tabela de distâncias: ' + tab + ' nm"' : '') + '>' +
+    '<div class="sub">' + (auto ? (origem || 'tabela') : '') + '</div>';
+}
+function marcarAuto(campo, origem) {
+  campo.classList.toggle('auto', !!origem);
+  $('.sub', campo.parentNode).textContent = origem;
+}
+function origemMilhas(trecho) {
+  const t = Comb.trecho(trecho);
+  return t && num(t.milhas) != null ? 'do trecho' : 'tabela';
+}
 
 function linhaPlano(rot, det, val) {
   return '<div class="lp"><span>' + rot + (det ? ' <small>' + det + '</small>' : '') + '</span><span class="num">' + val + '</span></div>';

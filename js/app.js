@@ -46,6 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
   Dispensa.ligar();
   Processo.ligar();
   Pacotes.ligar();
+  Dist.carregar();
   Materiais.ligar();
   Config.ligar();
 

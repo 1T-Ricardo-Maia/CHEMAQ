@@ -46,4 +46,4 @@ Ver [catalogos/README.md](catalogos/README.md). Por enquanto só traz o CATSER u
 
 ### Dados do navio
 
-Ver [navio/README.md](navio/README.md).
+Ver [navio/README.md](navio/README.md). Distâncias entre localidades (nm), usadas pelo planejamento de comissão: [navio/distancias.md](navio/distancias.md).
