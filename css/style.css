@@ -170,6 +170,8 @@ legend{font-family:var(--display);text-transform:uppercase;letter-spacing:.12em;
 .scrollerAlto{max-height:560px;overflow:auto}
 .scrollerAlto thead th{position:sticky;top:0;background:var(--cartao);z-index:1}
 .tabela input.inNum{width:84px;text-align:right;font-family:var(--mono);padding:4px 6px}
+.tabela input.inNum.auto{color:var(--terra)}
+.tabela td.num .sub:empty{display:none}
 .tabela.plano input{padding:5px 7px}
 .tabela.plano td{vertical-align:middle}
 .planoResumo{border-top:1px solid var(--line);margin-top:8px}
