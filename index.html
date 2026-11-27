@@ -236,6 +236,15 @@
     </form>
   </div>
   <div class="card">
+    <h2>Sugerir CATMAT</h2>
+    <p class="hint">Cole o link do produto que você quer comprar (ou escreva o tipo, a marca e a referência). O CHEMAQ procura no recorte do CATMAT com filtros, baterias, correias, rotores, bombas e peças de motor de embarcação.</p>
+    <div class="row catBusca">
+      <div><input type="text" id="catEntrada" placeholder="https://loja.com.br/filtro-combustivel-tecfil-fc165  ou  bateria 12 V 180 Ah" aria-label="Link ou descrição do produto"></div>
+      <div class="estreito"><button type="button" class="btn" id="btnCatSugerir">Sugerir</button></div>
+    </div>
+    <div id="catRes"></div>
+  </div>
+  <div class="card">
     <div class="tabela-wrap"><table class="tabela" id="tabMat">
       <thead><tr><th>Material · histórico</th><th>Onde · intervalo</th><th class="num">Consumo/ano</th><th class="num">Estoque a bordo</th>
         <th class="num">Comprar</th><th class="num">Preço unit. (R$)</th><th class="num">Total (R$)</th></tr></thead>
@@ -646,6 +655,7 @@
 <script src="js/processo.js"></script>
 <script src="js/pacotes.js"></script>
 <script src="js/materiais.js"></script>
+<script src="js/catmat.js"></script>
 <script src="js/painel.js"></script>
 <script src="js/config.js"></script>
 <script src="js/navio.js"></script>

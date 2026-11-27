@@ -48,6 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
   Pacotes.ligar();
   Dist.carregar();
   Materiais.ligar();
+  Catmat.ligar();
   Config.ligar();
 
   $('.tabs').addEventListener('click', e => {
