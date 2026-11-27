@@ -392,11 +392,20 @@ function textosItens(P, t) {
   const valorTxt = 'R$ ' + moeda(valor) + ' (' + extensoReais(valor) + ')';
   const soBaterias = itens.every(i => /bateria/i.test(i.nome));
   const temBateria = itens.some(i => /bateria/i.test(i.nome));
-  const objeto = 'Aquisição de ' + (P.servicoTitulo || 'sobressalentes') + (soBaterias
+  /* itens que vieram da aba Material trazem a memória de cálculo; os da IA ou digitados, não */
+  const daAba = itens.every(i => i.memoria);
+  const base = Object.assign({}, t);   /* textos de item único, para o que não depende da lista */
+  const material = ehMaterial(P);
+  const cod = material ? 'CATMAT' : (P.catTipo || 'CATSER');
+  const objeto = daAba ? 'Aquisição de ' + (P.servicoTitulo || 'sobressalentes') + (soBaterias
     ? ' para a partida dos motores e o circuito de 24 V '
-    : ' para a manutenção preventiva e corretiva dos sistemas de propulsão, geração de energia, governo e habitabilidade ') + contr('o ' + om);
+    : ' para a manutenção preventiva e corretiva dos sistemas de propulsão, geração de energia, governo e habitabilidade ') + contr('o ' + om)
+    : (material ? 'Aquisição de ' : 'Contratação de serviço de ') + (P.servicoTitulo || '[objeto]') + (P.alvo ? ' ' + contr(P.alvo) : '') + ' ' + contr('o ' + om);
   t._assunto = objeto;
-  const lista = itens.map((i, n) => (n + 1) + '. ' + i.nome + ' – ' + i.qtd + ' unidade' + (i.qtd > 1 ? 's' : ''));
+  const lista = itens.map((i, n) => (n + 1) + '. ' + i.nome + ' – ' + i.qtd + ' ' + (i.un && i.un !== 'UN' ? i.un : 'unidade' + (i.qtd > 1 ? 's' : '')));
+  const fundLegal = 'A contratação enquadra-se na hipótese do art. 75, inciso II, da Lei nº 14.133/2021, processando-se pelo procedimento de dispensa ' +
+    'eletrônica da IN SEGES/ME nº 67/2021, precedida de pesquisa de preços nos termos do art. 23 da mesma Lei e da IN SEGES/ME nº 65/2021' +
+    (P.pesquisaNum ? ', consubstanciada na Pesquisa de Preços nº ' + P.pesquisaNum : '') + ', observada a vedação ao fracionamento indevido de despesa (art. 75, § 1º).';
 
   t.necessidade = 'A presente necessidade diz respeito à ' + objeto.charAt(0).toLowerCase() + objeto.slice(1) + ', ' +
     'em especial dos Motores de Combustão Principal (MTU 6R 199 TB60), dos Motores de Combustão Auxiliar (MWM D229-6) e dos demais ' +
@@ -409,18 +418,23 @@ function textosItens(P, t) {
     (P.pesquisaNum ? ', consubstanciada na Pesquisa de Preços nº ' + P.pesquisaNum : '') + '. Os materiais da mesma natureza foram ' +
     'reunidos em um único processo anual, e o valor estimado, somado às demais despesas da unidade gestora no exercício com objetos do ' +
     'mesmo ramo de atividade, observa o limite do art. 75, inciso II (art. 75, § 1º, incisos I e II, da Lei nº 14.133/2021).';
+  if (!daAba) t.necessidade = maiusc1(P.alvo || 'O objeto') + ' ' + contr('o ' + om) + (P.identificacao ? ', ' + P.identificacao : '') +
+    (P.funcao ? ', ' + P.funcao : '') + '. ' + (P.defeitos ? 'A Divisão de Máquinas constatou ' + P.defeitos.replace(/\.$/, '') + '. ' : '') +
+    (P.consequencias || 'A contratação é necessária para manter a disponibilidade dos equipamentos e a prontidão operativa do meio.') +
+    '\n\nA contratação compreende ' + itens.length + ' itens: ' + enumerar(itens.map(i => i.nome.toLowerCase())) + '.\n\n' + fundLegal;
   t.dfdJustificativa = t.necessidade;
   t.descricaoSucinta = objeto + ', em ' + itens.length + ' itens, conforme tabela do Termo de Referência.';
   t.quantidades = 'Estimativa das quantidades a serem contratadas, com a memória de cálculo de cada item:\n\n' +
-    itens.map((i, n) => (n + 1) + '. ' + i.nome + ': ' + i.qtd + ' unidade' + (i.qtd > 1 ? 's' : '') + '. Uso: ' + i.onde + '. Cálculo: ' + i.memoria +
-      (i.ajuste != null ? '; quantidade ajustada pela Divisão de Máquinas para ' + i.ajuste + ' un.' : '') + '.').join('\n');
+    itens.map((i, n) => (n + 1) + '. ' + i.nome + ': ' + i.qtd + ' ' + (i.un && i.un !== 'UN' ? i.un : 'unidade' + (i.qtd > 1 ? 's' : '')) + '.' +
+      (i.onde ? ' Uso: ' + i.onde + '.' : '') + (i.memoria ? ' Cálculo: ' + i.memoria +
+      (i.ajuste != null ? '; quantidade ajustada pela Divisão de Máquinas para ' + i.ajuste + ' un.' : '') + '.' : '')).join('\n');
   t.dfdValor = 'O custo estimado da contratação é de ' + valorTxt + ', correspondente à soma dos itens, com preços obtidos na Pesquisa de Preços nº ' +
     (P.pesquisaNum || '[nº]') + ', realizada no Compras.gov.br nos termos do art. 23 da Lei nº 14.133/2021 e da IN SEGES/ME nº 65/2021.';
   t.requisitos = 'Todos os itens devem ser novos, de primeiro uso, em embalagem original, adequados aos modelos dos equipamentos ' +
     'instalados a bordo. A marca e o modelo indicados em cada item servem de referência de qualidade e de compatibilidade (art. 41, ' +
     'inciso I, alínea "d", da Lei nº 14.133/2021), admitidos produtos equivalentes ou de melhor qualidade, cuja compatibilidade ' +
     'dimensional e de desempenho será conferida no recebimento. Vedado o fornecimento de produtos remanufaturados ou usados.\n\n' +
-    itens.map((i, n) => (n + 1) + '. ' + i.nome + ' – ' + i.espec + '. Aplicação: ' + i.onde + '.').join('\n') +
+    itens.map((i, n) => (n + 1) + '. ' + i.nome + (i.espec ? ' – ' + i.espec.replace(/\.$/, '') : '') + '.' + (i.onde ? ' Aplicação: ' + i.onde + '.' : '')).join('\n') +
     '\n\nForma de fornecimento: entrega única, em até ' + (parseInt(P.prazo, 10) || 10) + ' dias corridos do pedido, ' +
     'com embalagem e rotulagem que preservem o estado de novo durante a armazenagem a bordo.';
   t.mercado = 'Conforme o art. 5º da Instrução Normativa SEGES/ME nº 65/2021, foram utilizadas contratações similares de outros ' +
@@ -429,7 +443,7 @@ function textosItens(P, t) {
   t.solucao = 'Aquisição dos ' + itens.length + ' itens listados, para reposição do estoque de pronto emprego da Divisão de Máquinas ' +
     'e cumprimento do plano de manutenção preventiva do ano, com entrega única e armazenagem a bordo.';
   t.etpValor = 'Valor (R$): ' + moeda(valor) + '\n\nO custo máximo estimado da contratação é de ' + valorTxt + '.';
-  t.parcelamento = 'O objeto é divisível e será julgado por item, pelo menor preço, conforme o art. 40, inciso V, alínea "b", e § 2º, ' +
+  t.parcelamento = parcelamentoTxt(P, material) || 'O objeto é divisível e será julgado por item, pelo menor preço, conforme o art. 40, inciso V, alínea "b", e § 2º, ' +
     'da Lei nº 14.133/2021: os itens são independentes, não há prejuízo para o conjunto e a divisão amplia a participação de fornecedores ' +
     'especializados em cada linha (filtros, peças de bomba, correias, baterias).';
   t.beneficiosTxt = alineas(['manutenção dos intervalos de troca recomendados pelos fabricantes durante todo o ano',
@@ -440,15 +454,20 @@ function textosItens(P, t) {
     (temBateria ? ' As baterias de chumbo-ácido substituídas serão devolvidas ao fornecedor, que lhes dará destinação ambientalmente ' +
       'adequada, nos termos do art. 33, inciso II, da Lei nº 12.305/2010 e da Resolução CONAMA nº 401/2008.' : '');
   t.trObjeto = objeto + ', nos termos da tabela abaixo, conforme condições e exigências estabelecidas neste instrumento.';
-  t.trTabela = 'ITEM | ESPECIFICAÇÃO | CATMAT | UNIDADE | QTD | VALOR UNITÁRIO | VALOR TOTAL\n' +
-    itens.map((i, n) => (n + 1) + ' | ' + i.nome.toUpperCase() + ' – ' + i.espec + ' | ' + i.catmat + ' | ' + i.un + ' | ' + i.qtd +
-      ' | R$ ' + moeda(i.preco) + ' | R$ ' + moeda(i.qtd * i.preco)).join('\n') + '\nTOTAL |  |  |  |  |  | R$ ' + moeda(valor);
+  const linhaItem = (i, n) => (n + 1) + ' | ' + i.nome.toUpperCase() + (i.espec ? ' – ' + i.espec : '') + ' | ' + (i.catmat || '') + ' | ' + i.un + ' | ' + i.qtd +
+    ' | R$ ' + moeda(i.preco) + ' | R$ ' + moeda(i.qtd * i.preco);
+  t.trTabela = 'ITEM | ESPECIFICAÇÃO | ' + cod + ' | UNIDADE | QTD | VALOR UNITÁRIO | VALOR TOTAL\n' +
+    (criterioDe(P).id === 'grupo'
+      ? gruposDe(P).map((g, k) => 'GRUPO ' + (k + 1) + ' – ' + g.nome.toUpperCase() + ' |  |  |  |  |  | \n' +
+        g.itens.map(n => linhaItem(itens[n - 1], n - 1)).join('\n') + '\nSUBTOTAL DO GRUPO ' + (k + 1) + ' |  |  |  |  |  | R$ ' +
+        moeda(g.itens.reduce((s, n) => s + itens[n - 1].qtd * itens[n - 1].preco, 0))).join('\n')
+      : itens.map(linhaItem).join('\n')) + '\nTOTAL |  |  |  |  |  | R$ ' + moeda(valor);
   t.trDivergencia = '1.2. Em caso de conflito entre a descrição do bem contida no CATMAT e a discorrida detalhadamente na tabela acima, ' +
     'os interessados deverão considerar a descrição presente na tabela.\n\n1.3. O objeto desta contratação não se enquadra como bem de ' +
     'luxo, conforme Decreto nº 10.818, de 27 de setembro de 2021.';
   t.trRequisitos = '4.2. Na presente contratação será admitida a indicação das seguintes marcas ou modelos, como referência de ' +
     'qualidade e compatibilidade, aceitos equivalentes, de acordo com as justificativas contidas no Estudo Técnico Preliminar:\n' +
-    itens.map((i, n) => '- ' + i.nome.replace(/\s*\([^)]*\)\s*$/, '') + ' - ' + i.marca + (n === itens.length - 1 ? '.' : ';')).join('\n') +
+    (itens.some(i => i.marca) ? itens.filter(i => i.marca).map((i, n, a) => '- ' + i.nome.replace(/\s*\([^)]*\)\s*$/, '') + ' - ' + i.marca + (n === a.length - 1 ? '.' : ';')).join('\n') : '- não há marca de referência indicada.') +
     (temBateria ? '\n\nA Contratada deverá receber as baterias usadas, em quantidade equivalente às fornecidas, dando-lhes destinação ' +
       'ambientalmente adequada (Lei nº 12.305/2010, art. 33, II; Resolução CONAMA nº 401/2008).' : '') +
     '\n\n4.3. Não será admitida a subcontratação do objeto contratual.\n\n4.4. Não haverá exigência da garantia da contratação dos arts. ' +
@@ -465,5 +484,8 @@ function textosItens(P, t) {
   t.avisoItem = 'Havendo mais de um item, faculta-se ao fornecedor a participação em quantos forem de seu interesse.\n\n' + lista.join('\n');
   t.avisoGerais = '1.1.2.1. Produtos novos, de primeiro uso, em embalagem original; marcas e modelos indicados como referência, aceitos equivalentes.\n' +
     '1.1.2.2. Entrega única em até ' + (parseInt(P.prazo, 10) || 10) + ' dias corridos do pedido.';
+  /* fora da aba Material, os textos específicos de filtros e baterias dão lugar aos gerais; em serviço, também os de entrega */
+  if (!daAba) ['impactos', 'beneficiosTxt'].forEach(k => { t[k] = base[k]; });
+  if (!material) ['solucao', 'trExecucao', 'trGarantia', 'avisoGerais', 'mercado'].forEach(k => { t[k] = base[k]; });
   return t;
 }

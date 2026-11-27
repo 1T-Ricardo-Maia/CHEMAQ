@@ -333,3 +333,15 @@ dialog.largo{width:min(920px,calc(100vw - 24px))}
 .lista li:has(.dir.botoes) .dir.botoes{justify-content:flex-start}
 #planoRegioes{margin-top:8px}
 .cab label{margin:8px 0 5px}
+
+/* ---- dispensa: orçamento e IA (selo nos campos preenchidos pela IA) ---- */
+#formDisp .daIA{border-color:var(--brass);background:var(--acento-bg)}
+#formDisp label.rotIA::after{content:"IA";font-family:var(--mono);font-size:10px;background:var(--acento-bg);color:var(--dest);border-radius:2px;padding:1px 5px;margin-left:6px;letter-spacing:0}
+#cardIA label.check{text-transform:none;letter-spacing:0;font-size:13px;color:var(--ink);display:flex;gap:8px;align-items:center;margin-top:12px}
+#cardIA label.check input{width:auto}
+.iaStatus{font-size:13px;color:var(--muted);margin:10px 0 0;min-height:1em}
+.iaStatus.ok{color:var(--ok-ink)}
+.iaStatus.erro{color:var(--alert-ink)}
+#tabDispItens textarea.mini-in{margin-top:4px;resize:vertical}
+#tabDispItens td.num .mini-in{width:72px}
+#tabDispItens td.num .mini-in.larga{width:100px}

@@ -350,10 +350,13 @@
     <div class="card hidden" id="dispItens">
       <div class="passo">Itens</div>
       <h2>Itens da dispensa</h2>
-      <p class="hint">Dispensa de material com vários itens, criada na aba Material. Ajuste a quantidade e o preço aqui; os textos e o valor total se atualizam.</p>
+      <p class="hint">Vem da aba Material, da IA ou é montada aqui. Ajuste nome, especificação, código, quantidade e preço; os textos, a tabela do TR e o valor total se atualizam.</p>
+      <p class="hint hidden" id="dispItensGrupo">Modalidade por grupo: dê o mesmo nome de grupo aos itens do mesmo lote. A tabela do TR sai com os itens reunidos por grupo e o subtotal de cada lote.</p>
+      <datalist id="dispGrupos"></datalist>
       <div class="tabela-wrap"><table class="tabela" id="tabDispItens">
-        <thead><tr><th class="num">Item</th><th>Material</th><th class="num">Qtd</th><th class="num">Unitário (R$)</th><th class="num">Total (R$)</th><th></th></tr></thead>
+        <thead><tr><th class="num">Item</th><th>Especificação</th><th class="num">Qtd</th><th class="num">Unitário (R$)</th><th class="num">Total (R$)</th><th></th></tr></thead>
         <tbody></tbody></table></div>
+      <div class="acoes" style="margin-top:8px"><button class="btn ghost" type="button" id="btnNovoItem">Adicionar item</button></div>
     </div>
 
     <form id="formDisp" autocomplete="off">
@@ -379,12 +382,47 @@
           <option>Serviço continuado COM dedicação exclusiva de mão de obra</option><option>Material de consumo</option>
           <option>Material permanente/equipamento</option></select>
         <select name="catTipo" class="hidden" tabindex="-1" aria-hidden="true"><option>CATSER</option><option>CATMAT</option></select>
+        <label>Modalidade de julgamento — como o Aviso e o TR vão julgar as propostas</label>
+        <div class="opcoes" id="dispCriterio">
+          <button type="button" class="opcao" data-criterio="item"><b>Menor preço por item</b><span>Cada item é disputado sozinho; com um item só, o objeto é único</span></button>
+          <button type="button" class="opcao" data-criterio="grupo"><b>Menor preço por grupo</b><span>Itens reunidos em lotes; vence quem cobrar menos pelo lote</span></button>
+          <button type="button" class="opcao" data-criterio="global"><b>Menor preço global</b><span>Todos os itens num lote único, disputado pelo valor total</span></button>
+        </div>
+        <div class="acoes" style="margin-top:8px"><button class="btn ghost" type="button" id="btnUsarItens">Usar tabela com vários itens</button></div>
+      </div>
+
+      <div class="card" id="cardIA">
+        <div class="passo">Passo 2 · opcional</div>
+        <h2>Orçamento e IA</h2>
+        <p class="hint">Entregue à IA o orçamento, os links dos produtos ou uma descrição do que se quer contratar. Ela devolve um JSON que preenche o formulário inteiro: equipamento, escopo, tabela de itens, valor, prazos e os textos do ETP, do TR e do Aviso. Tudo o que vier dela fica marcado com <span class="tagIA">IA</span> até você editar. A IA não inventa CATMAT/CATSER, marca nem preço: o que não estiver na fonte volta em branco.</p>
+        <div class="opcoes" id="iaModos">
+          <button type="button" class="opcao" data-iamodo="descricao"><b>Descrever por escrito</b><span>O que se pretende contratar, com o que já se sabe</span></button>
+          <button type="button" class="opcao" data-iamodo="arquivo"><b>Orçamento em PDF ou TXT</b><span>A proposta da empresa ou a planilha de cotação</span></button>
+          <button type="button" class="opcao" data-iamodo="links"><b>Links dos produtos</b><span>Um por linha; cada link vira um item</span></button>
+        </div>
+        <div data-painel="descricao"><label for="iaDescricao">Descrição</label>
+          <textarea id="iaDescricao" rows="4" placeholder="ex.: revisão completa da bomba de água bruta do MCA 1, com troca do selo mecânico, rolamentos e impelidor; a empresa X cotou R$ 8.900,00"></textarea></div>
+        <div data-painel="arquivo" class="hidden"><label for="iaArquivo">Arquivo do orçamento (até 4 MB)</label>
+          <input type="file" id="iaArquivo" accept=".pdf,.txt,.csv,application/pdf,text/plain">
+          <div class="sub" id="iaArqNome"></div></div>
+        <div data-painel="links" class="hidden"><label for="iaLinks">Links dos produtos — um por linha; a quantidade vai depois do link, separada por espaço</label>
+          <textarea id="iaLinks" rows="4" placeholder="https://loja.exemplo/filtro-psl962 4"></textarea></div>
+        <label class="check"><input type="checkbox" id="iaTextos" checked> Pedir também os textos longos (justificativa, requisitos, solução…)</label>
+        <div class="acoes" style="margin-top:10px">
+          <button class="btn" type="button" id="iaCopiar">Copiar o prompt</button>
+          <button class="btn hidden" type="button" id="iaChamar">Preencher com IA</button>
+          <button class="btn ghost" type="button" id="iaChaveBtn">Chave de IA</button>
+        </div>
+        <div class="ia"><label for="iaJson">Colar o JSON da IA</label>
+          <textarea id="iaJson" rows="4" placeholder='{ "servicoTitulo": "...", "alvo": "...", "itens": [ ... ] }'></textarea>
+          <div class="acoes" style="margin-top:8px"><button class="btn" type="button" id="iaAplicar">Preencher os campos com este JSON</button></div></div>
+        <p class="iaStatus" id="iaStatus" role="status"></p>
       </div>
 
       <div class="card">
-        <div class="passo">Passo 2</div>
+        <div class="passo">Passo 3</div>
         <h2>Campos do processo</h2>
-        <p class="hint">Tudo é editável. Campos de texto deixados em branco usam o texto automático, que aparece em cinza dentro da caixa.</p>
+        <p class="hint">Tudo é editável. Campos de texto deixados em branco usam o texto automático, que aparece em cinza dentro da caixa. Os campos que se repetem sugerem os valores das dispensas anteriores.</p>
 
         <details class="secao" open>
           <summary><span><b>Identificação do processo</b><small>Capa, autuação, autorização e nome dos arquivos</small></span><i class="cont"></i></summary>
@@ -393,6 +431,12 @@
             <div><label>Nº do processo (NUP)</label><input type="text" name="processoNum" placeholder="63387.000000/2026-00"></div>
             <div class="estreito"><label>Data da capa</label><input type="date" name="dataCapa"></div>
           </div>
+          <div class="row">
+            <div class="estreito"><label>Nº do ETP</label><input type="text" name="numETP"></div>
+            <div class="estreito"><label>Nº do Aviso</label><input type="text" name="numAviso"></div>
+            <div class="estreito"><label>Nº do TR</label><input type="text" name="numTR"></div>
+          </div>
+          <p class="sub">Em branco, o ETP, o Aviso e o TR levam o número da dispensa.</p>
           <div><label>Quem rubrica as folhas (Termo de Autuação)</label><input type="text" name="comissionado"></div>
         </details>
 
@@ -454,6 +498,26 @@
           </div>
         </details>
 
+        <details class="secao">
+          <summary><span><b>Sessão do Aviso</b><small>Data da sessão e horário da fase de lances</small></span><i class="cont"></i></summary>
+          <div class="row">
+            <div class="estreito"><label>Data da sessão</label><input type="date" name="dataSessao"></div>
+            <div class="estreito"><label>Horário da fase de lances</label><input type="text" name="horarioLances" placeholder="08:00 às 14:00" data-opc></div>
+          </div>
+        </details>
+
+        <details class="secao">
+          <summary><span><b>Dotação orçamentária</b><small>Opcional · sai na Declaração Orçamentária</small></span><i class="cont"></i></summary>
+          <div class="row">
+            <div><label>Programa de Trabalho (PTRES)</label><input type="text" name="ptres" data-opc></div>
+            <div><label>Fonte de Recursos</label><input type="text" name="fonte" data-opc></div>
+          </div>
+          <div class="row">
+            <div><label>Natureza da Despesa</label><input type="text" name="natureza" placeholder="339039" data-opc></div>
+            <div><label>Plano Interno</label><input type="text" name="planoInterno" data-opc></div>
+          </div>
+        </details>
+
         <details class="secao" id="secOrg">
           <summary><span><b>Organização militar e assinaturas</b><small>Vem de Configurações</small></span><i class="cont"></i></summary>
           <div id="dispOrg" class="lidaCfg"></div>
@@ -461,16 +525,6 @@
         </details>
       </div>
     </form>
-
-    <div class="card" id="cardIA">
-      <div class="passo">Passo 3 · opcional</div>
-      <h2>Redação com IA</h2>
-      <p class="hint">Os textos já saem prontos a partir dos campos acima. Para uma redação técnica mais completa, copie o pedido, cole no claude.ai junto com as páginas do manual e traga a resposta de volta. Não precisa de chave de API.</p>
-      <div class="acoes"><button class="btn ghost" id="btnPromptIA">Copiar pedido para a IA</button></div>
-      <div class="ia"><label for="dJson">Resposta da IA (JSON)</label>
-        <textarea id="dJson" rows="4" placeholder='{ "necessidade": "...", "requisitos": "...", ... }'></textarea>
-        <div class="acoes" style="margin-top:8px"><button class="btn" id="btnAplicarIA">Usar estes textos</button></div></div>
-    </div>
 
     <div class="card">
       <div class="passo">Passo 4</div>
@@ -746,6 +800,7 @@
 <script src="js/combustivel.js"></script>
 <script src="js/docx.js"></script>
 <script src="js/dispensa.js"></script>
+<script src="js/dispensa-ia.js"></script>
 <script src="js/processo.js"></script>
 <script src="js/pacotes.js"></script>
 <script src="js/materiais.js"></script>

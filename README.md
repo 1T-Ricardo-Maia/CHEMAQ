@@ -11,7 +11,7 @@ Abra `index.html` no navegador (ou publique pelo GitHub Pages). Não precisa ins
 - **Combustível**: lançamento diário por motor (litros e horas), recebimentos e sondagem, ROB calculado, gráfico de consumo e L/h por motor. As horas lançadas podem ser somadas aos horímetros, e as "Horas de navegação" da sondagem somam nos MCP. O Planejar comissão usa o consumo por região (Belém–Marajó 8,5 L/nm, Amazonas subindo 12 L/nm, editáveis) e separa dias parado em comissão (430 L/dia) e na base.
 - **Material**: filtros, impelidores, correias e baterias de uso comum, com histórico das dispensas de 2025 e 2026, onde cada um é usado, intervalo de troca do manual, consumo anual calculado pelas horas de uso, estoque a bordo e preço de referência. Marque os itens e as quantidades e a dispensa anual de material (vários itens) sai pronta na aba Dispensa.
 - **Serviço**: escolha o equipamento (MCP, redutora, MCA, gerador, máquina do leme, bombas, compressor, ventiladores, separador, molinete/turcos, motor de popa) e o serviço; o escopo vem da tabela de manutenção do manual, mais as peças que costumam estar degradadas e o painel elétrico de comando e alarme. Gera o pedido de orçamento para as empresas, compara as propostas (média, mediana, menor) e cria a dispensa de serviço na aba Dispensa, com critérios de aceitação e CATSER sugerido.
-- **Dispensa**: no modo rápido, o formulário mostra só o que falta preencher. A partir do equipamento e do que foi constatado, gera o DFD em Word e os textos do ETP, do TR e do Aviso no formato dos campos do Compras.gov.br, no padrão da última dispensa da Divisão de Máquinas. Há um pedido pronto para colar no claude.ai e trazer a redação técnica de volta.
+- **Dispensa**: no modo rápido, o formulário mostra só o que falta preencher. A partir do equipamento e do que foi constatado, gera o DFD em Word e os textos do ETP, do TR e do Aviso no formato dos campos do Compras.gov.br, no padrão da última dispensa da Divisão de Máquinas. O passo **Orçamento e IA** (trazido do gerador do SIGAB) recebe uma descrição, o orçamento em PDF/TXT ou os links dos produtos e monta o prompt; colado no claude.ai, a IA devolve um JSON que preenche o formulário inteiro (campos, tabela de itens, valor, prazos e textos), com o selo IA em cada campo até ser revisado. Com chave de API guardada no navegador, o CHEMAQ chama a IA direto. Também tem modalidade de julgamento (por item, por grupo, global), tabela de itens livre, nº do ETP/Aviso/TR, data da sessão, dotação orçamentária e sugestões dos valores das dispensas anteriores.
 - **Configurações**: dados do navio, dados fixos da dispensa e backup.
 
 ## Onde ficam os dados
@@ -27,7 +27,8 @@ js/util.js        datas, números, CSV
 js/store.js       armazenamento
 js/manutencao.js  plano, OS, equipamentos, histórico
 js/combustivel.js lançamentos, ROB, gráfico
-js/dispensa.js    textos da dispensa e pedido para a IA
+js/dispensa.js    textos da dispensa, itens e modalidade de julgamento
+js/dispensa-ia.js orçamento → prompt → JSON da IA preenche a dispensa; sugestões dos campos
 js/docx.js        gerador de .docx sem bibliotecas
 js/backup.js      backup automático na pasta / download
 js/ficha.js       ficha do equipamento

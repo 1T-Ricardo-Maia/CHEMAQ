@@ -130,6 +130,13 @@ function riscosPadrao(P) {
 }
 
 /* ---------- peças do processo ---------- */
+/* Classificação orçamentária (opcional): sai na Declaração Orçamentária quando preenchida. */
+function dotacaoTxt(P) {
+  const d = [['Programa de Trabalho (PTRES)', P.ptres], ['Fonte de Recursos', P.fonte], ['Natureza da Despesa', P.natureza], ['Plano Interno', P.planoInterno]]
+    .filter(([, v]) => String(v || '').trim());
+  return d.length ? 'A despesa correrá à conta da seguinte classificação orçamentária: ' + d.map(([r, v]) => r + ' ' + v).join('; ') + '.' : '';
+}
+
 const PECAS = [
   { n: '01', nome: 'Capa', arq: 'CAPA', gera: 'capa' },
   { n: '02', nome: 'Termo de Autuação', arq: 'TERMO_DE_AUTUACAO', gera: 'autuacao' },
@@ -182,7 +189,7 @@ const Processo = {
         return cab('DECLARAÇÃO ORÇAMENTÁRIA PARA FINS DA LEI DE RESPONSABILIDADE FISCAL') +
           corrido('O ' + vars.ordFuncao + ' do ' + vars.om + ', no uso de suas atribuições legais, atendendo o disposto no art. 16, ' +
             'inciso II, da Lei Complementar nº 101/2000.') +
-          p('RESOLVE:', { b: true, antes: 120, depois: 160 }) + corrido(tf('declaracao')) + assin();
+          p('RESOLVE:', { b: true, antes: 120, depois: 160 }) + corrido(tf('declaracao')) + (dotacaoTxt(P) ? corrido(dotacaoTxt(P)) : '') + assin();
       case 'riscos': {
         const X = (v, o) => '(' + (v === o ? 'X' : '  ') + ') ' + o;
         const nivel = v => ['Baixa', 'Média', 'Alta'].map(o => X(v, o)).join('   ');
