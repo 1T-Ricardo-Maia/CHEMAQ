@@ -62,6 +62,13 @@ const contr = s => { /* "de" + artigo → "do/da/dos/das" */
   const m = String(s || '').match(/^(o|a|os|as)\s+(.*)$/i);
   return m ? 'd' + m[1].toLowerCase() + ' ' + m[2] : 'de ' + s;
 };
+const CATEGORIAS = [
+  ['Serviço não continuado', 'Execução pontual, com entrega definida'],
+  ['Serviço continuado SEM dedicação exclusiva de mão de obra', 'Prestação sucessiva, sem posto fixo a bordo'],
+  ['Serviço continuado COM dedicação exclusiva de mão de obra', 'Prestação sucessiva, com posto fixo'],
+  ['Material de consumo', 'Sobressalentes, filtros, óleos e itens que se gastam'],
+  ['Material permanente/equipamento', 'Bens duráveis, que entram em carga']
+];
 const maiusc1 = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 function ehMaterial(P) { return /^Material/.test(P.tipoObjeto); }
 
@@ -113,7 +120,10 @@ const CAMPOS = {
 const CAMPOS_IA = ['necessidade', 'descricaoSucinta', 'requisitos', 'solucao', 'quantidades', 'parcelamento',
   'beneficiosTxt', 'providencias', 'impactos', 'avisoItem'];
 
-function textosPadrao(P) {
+/* Textos de todas as peças: DFD, ETP, TR e Aviso (aqui) e capa/atos (processo.js). */
+function textosPadrao(P) { return textosAtos(P, textosBase(P)); }
+
+function textosBase(P) {
   const C = DB.dados.dispCfg || {};
   const om = C.om || '[OM]';
   const eqTxt = P.alvo || '[equipamento]';
@@ -132,6 +142,7 @@ function textosPadrao(P) {
   const pesquisa = P.pesquisaNum ? ', consubstanciada na Pesquisa de Preços nº ' + P.pesquisaNum : '';
   const ano = (P.parData || hojeIso()).slice(0, 4);
   const t = {};
+  t._assunto = (material ? 'Aquisição de ' : 'Contratação de serviço de ') + titulo + ' ' + contr(eqTxt) + ' ' + contr('o ' + om);
 
   const fundLegal = 'A contratação enquadra-se na hipótese do art. 75, inciso II, da Lei nº 14.133/2021, por se tratar de ' +
     (material ? 'aquisição' : 'serviço') + ' de valor estimado compatível com o limite legal de dispensa de licitação, processando-se pelo ' +
@@ -307,7 +318,7 @@ function textoFinal(P, chave, padrao) {
 /* ---------- módulo ---------- */
 const Dispensa = {
   atual: null,
-  doc: 'dfd',
+  doc: 'atos',
 
   lista() { return DB.dados.dispensas || (DB.dados.dispensas = []); },
 
@@ -330,7 +341,7 @@ const Dispensa = {
     const prox = MESES[(new Date().getMonth() + 1) % 12];
     const P = Object.assign({
       id: novoId('disp'), tipoObjeto: 'Serviço não continuado', carater: 'preventivo e corretivo', catTipo: 'CATSER',
-      unidade: 'SERV', qtd: '1', prioridade: 'ALTA', mes: prox, prazo: '60', vigencia: '4', garantia: '180', textos: {},
+      unidade: 'SERV', qtd: '1', prioridade: 'ALTA', mes: prox, prazo: '60', vigencia: '4', garantia: '180', textos: {}, dataCapa: hojeIso(),
       criado: new Date().toISOString()
     }, preset || {});
     this.lista().push(P);
@@ -422,6 +433,8 @@ const Dispensa = {
     const P = this.atual; if (!P) return;
     this.renderItens();
     const pad = textosPadrao(P);
+    this.renderForm(P, pad);
+    $('#dispPecas').innerHTML = Processo.render(P);
     $$('.docAbas [data-doc]').forEach(b => b.setAttribute('aria-selected', b.dataset.doc === this.doc));
     $('#dispDocs').innerHTML = CAMPOS[this.doc].map(([k, rot]) => {
       const ed = (P.textos || {})[k];
@@ -429,9 +442,55 @@ const Dispensa = {
       return '<div class="campoDoc" data-campo="' + k + '"><div class="topo"><b>' + esc(rot) + marca + '</b><span class="acoes">' +
         '<button class="mini ok" data-copiar="' + k + '">Copiar</button>' +
         (k.startsWith('dfd') && k !== 'dfdJustificativa' || k === 'trTabela' ? '' : '<button class="mini" data-editar="' + k + '">Editar</button>') +
+        (marca && CAMPOS.atos.some(([a]) => a === k) ? '<button class="mini ok" data-salvarmodelo="' + k + '">Salvar como modelo</button>' : '') +
         (marca ? '<button class="mini" data-restaurar="' + k + '">Restaurar padrão</button>' : '') +
         '</span></div><div class="texto">' + esc(textoFinal(P, k, pad)) + '</div></div>';
     }).join('');
+  },
+
+  /* Partes do formulário que dependem dos dados: escolhas, textos automáticos, contadores e progresso. */
+  renderForm(P, pad) {
+    const f = $('#formDisp'), C = DB.dados.dispCfg || {};
+    const auto = metaAuto(P, pad);
+    ['assunto', 'finalidade', 'contribuicao', 'comissionado'].forEach(k => { f.elements[k].placeholder = auto[k]; });
+    const v = num(P.valor);
+    $('#valorExtenso').textContent = v != null ? 'R$ ' + moeda(v) + ' · ' + extensoReais(v) : '';
+    const cat = P.catTipo || 'CATSER';
+    $$('#dispTipo [data-tipo]').forEach(b => b.setAttribute('aria-pressed', b.dataset.tipo === cat));
+    const cats = cat === 'CATMAT' ? CATEGORIAS.slice(3) : CATEGORIAS.slice(0, 3);
+    $('#dispCat').innerHTML = cats.map(([c, d]) => '<button type="button" class="opcao" data-cat="' + esc(c) + '" aria-pressed="' +
+      (P.tipoObjeto === c) + '"><b>' + esc(c) + '</b><span>' + esc(d) + '</span></button>').join('');
+    $('#dispPacotes').innerHTML = Pacotes.render(P);
+    const org = [['OM', C.om], ['UASG', C.uasg], ['Cidade', C.cidade], ['Setor', C.setor],
+      ['Ordenador', [C.ordPosto, C.ordNome].filter(Boolean).join(' ') + (C.ordNome && C.ordFuncao ? ' · ' + C.ordFuncao : '')],
+      ['Responsável', [C.respPosto, C.respNome].filter(Boolean).join(' ')], ['UGE', C.uge]];
+    $('#dispOrg').innerHTML = org.map(([r, x]) => '<div><span>' + r + '</span><b>' + (x ? esc(x) : '<em class="alerta">falta</em>') + '</b></div>').join('');
+    /* contadores das seções e barra de preenchimento */
+    let feitos = 0, total = 0;
+    $$('#formDisp details.secao').forEach(d => {
+      let n = 0, t = 0;
+      if (d.id === 'secOrg') { t = org.length; n = org.filter(([, x]) => x && String(x).trim()).length; }
+      else $$('[name]', d).forEach(el => { t++; if (String(el.value).trim() || (el.name in auto && el.placeholder)) n++; });
+      $('.cont', d).textContent = n + '/' + t;
+      $('.cont', d).classList.toggle('ok', n === t);
+      feitos += n; total += t;
+    });
+    const pct = total ? Math.round(feitos / total * 100) : 0;
+    $('#dispProgN').textContent = feitos + '/' + total + ' · ' + pct + '%';
+    $('#dispProgBarra').style.width = pct + '%';
+  },
+
+  escolher(campo, valor) {
+    const f = $('#formDisp');
+    f.elements[campo].value = valor;
+    if (campo === 'catTipo') {
+      const cats = (valor === 'CATMAT' ? CATEGORIAS.slice(3) : CATEGORIAS.slice(0, 3)).map(c => c[0]);
+      if (!cats.includes(f.elements.tipoObjeto.value)) f.elements.tipoObjeto.value = cats[0];
+      const u = f.elements.unidade.value;
+      if (!u || u === 'SERV' || u === 'UN') f.elements.unidade.value = valor === 'CATMAT' ? 'UN' : 'SERV';
+    }
+    f.dispatchEvent(new Event('input', { bubbles: true }));
+    this.renderDocs();
   },
 
   editar(k) {
@@ -500,12 +559,7 @@ const Dispensa = {
   },
 
   /* ---------- Word ---------- */
-  nomeArq(sufixo) {
-    const P = this.atual;
-    return (P.processoNum ? P.processoNum.replace(/[^\d]/g, '').slice(-10) + '-' : '') + sufixo + '.docx';
-  },
-
-  dfdDocx() {
+  dfdCorpo() {
     const P = this.atual, C = DB.dados.dispCfg || {}, pad = textosPadrao(P);
     const { p } = Docx;
     const tf = k => textoFinal(P, k, pad);
@@ -535,11 +589,11 @@ const Dispensa = {
       secao('7. INDICAÇÃO DE VINCULAÇÃO OU DEPENDÊNCIA COM O OBJETO DE OUTRO DOCUMENTO DE FORMALIZAÇÃO DA DEMANDA', 'dfdVinculo') +
       assin(C.respNome, C.respPosto, 'Responsável pela contratação direta') +
       assin(C.ordNome, C.ordPosto, C.ordFuncao || 'Ordenador de Despesas');
-    baixarArquivo(this.nomeArq('DFD'), Docx.gerar(corpo));
+    return corpo;
   },
 
   /* ETP, TR e Aviso num só .docx de conferência, campo a campo. */
-  rascunhoDocx() {
+  rascunhoCorpo() {
     const P = this.atual, C = DB.dados.dispCfg || {}, pad = textosPadrao(P);
     const { p, tabela } = Docx;
     let corpo = '';
@@ -554,14 +608,14 @@ const Dispensa = {
         } else corpo += txt.split(/\n+/).map(l => p(l, { recuo: !/^[a-z]\)|^\d/.test(l) })).join('');
       });
     });
-    baixarArquivo(this.nomeArq('ETP-TR-Aviso'), Docx.gerar(corpo));
+    return corpo;
   },
 
   ligar() {
     $('#btnNovaDisp').onclick = () => this.nova();
     $('#btnFecharDisp').onclick = () => this.fechar();
-    $('#btnDfdDocx').onclick = () => this.dfdDocx();
-    $('#btnTodosDocx').onclick = () => this.rascunhoDocx();
+    $('#btnTodosDocx').onclick = () => Processo.baixarTudo();
+    $('#btnSalvarPacote').onclick = () => Pacotes.salvarAtual();
     $('#btnAplicarIA').onclick = () => this.aplicarIA();
     $('#btnPromptIA').onclick = () => navigator.clipboard.writeText(this.prompt())
       .then(() => toast('Pedido copiado. Cole no claude.ai, anexe as páginas do manual e traga o JSON de volta.'),
@@ -573,7 +627,7 @@ const Dispensa = {
       if (!this.atual) return;
       if (e.target.name === 'equipId') {
         const sug = this.dadosEquip(e.target.value);
-        ['alvo', 'identificacao', 'area'].forEach(k => {
+        ['alvo', 'identificacao', 'area', 'funcao'].forEach(k => {
           if (!f.elements[k].value && sug[k]) f.elements[k].value = sug[k];
         });
       }
@@ -591,7 +645,8 @@ const Dispensa = {
       else if (d.dupdisp) {
         const orig = this.lista().find(P => P.id === d.dupdisp);
         const copia = JSON.parse(JSON.stringify(orig));
-        Object.assign(copia, { id: novoId('disp'), processoNum: '', pesquisaNum: '', parCodigo: '', parData: '', criado: new Date().toISOString() });
+        Object.assign(copia, { id: novoId('disp'), numeroDispensa: '', processoNum: '', pesquisaNum: '', parCodigo: '', parData: '',
+          dataCapa: hojeIso(), criado: new Date().toISOString() });
         this.lista().push(copia); this.abrir(copia.id); this.gravar();
         toast('Cópia criada. Ajuste o NUP, a pesquisa de preços e o PAR.');
       }
@@ -601,8 +656,13 @@ const Dispensa = {
         DB.dados.dispensas = this.lista().filter(x => x.id !== d.deldisp);
         this.gravar();
       }
-      else if (d.doc) { this.doc = d.doc; this.renderDocs(); }
+      else if (d.doc) { this.doc = d.doc; this.renderDocs(); if (b.classList.contains('peca')) $('#dispDocs').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
       else if (d.copiar) this.copiar(d.copiar);
+      else if (d.peca) Processo.baixar(d.peca);
+      else if (d.salvarmodelo) Processo.salvarModelo(d.salvarmodelo);
+      else if (d.tipo) this.escolher('catTipo', d.tipo);
+      else if (d.cat) this.escolher('tipoObjeto', d.cat);
+      else if (d.pacote) Pacotes.aplicar(d.pacote);
       else if (d.editar) this.editar(d.editar);
       else if (d.salvartexto) this.salvarTexto(d.salvartexto);
       else if (d.restaurar) { delete this.atual.textos[d.restaurar]; this.gravar(); }

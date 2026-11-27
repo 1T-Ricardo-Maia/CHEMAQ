@@ -1,0 +1,189 @@
+{
+  "versao": 1,
+  "sobre": "Pacotes de serviço por equipamento. Ao escolher o equipamento na aba Dispensa, o CHEMAQ mostra os pacotes cujo campo 'equipamentos' bate com a tag, o nome ou o modelo, e um clique preenche a dispensa. Campos em lista viram um item por linha. Para acrescentar: monte a dispensa, clique em 'Salvar como pacote de serviço', exporte o .json e substitua este arquivo.",
+  "pacotes": [
+    {
+      "id": "mcp-mtu-lubrificacao-arrefecimento",
+      "nome": "Revisão de lubrificação e arrefecimento",
+      "origem": "Dispensa 26/2026 (MCP BE)",
+      "equipamentos": ["MCP", "6R 199", "motor de combustão principal"],
+      "campos": {
+        "tipoObjeto": "Serviço não continuado",
+        "catTipo": "CATSER",
+        "codigo": "13463",
+        "unidade": "SERV",
+        "qtd": "1",
+        "servicoTitulo": "revisão dos sistemas de lubrificação e de arrefecimento",
+        "identificacao": "motor diesel marítimo MTU 6R 199 TB60, de 294 kW (400 CV) a 1.850 rpm",
+        "funcao": "é um dos dois únicos meios de propulsão da embarcação",
+        "area": "manutenção de motores diesel marítimos",
+        "carater": "preventivo e corretivo",
+        "consequencias": "Essa condição compromete a lubrificação dos mancais e a dissipação de calor do motor, com risco de superaquecimento, de avaria grave e de indisponibilidade de um dos dois meios de propulsão do navio.",
+        "servicos": [
+          "diagnóstico inicial a quente, com registro da pressão do óleo nos regimes de referência, inspeção das linhas, análise laboratorial do óleo e medição das folgas axial e radial do turbocompressor",
+          "substituição da rede de óleo do turbocompressor (alimentação e retorno), com banjos, arruelas, abraçadeiras e suportes, e escorva do turbocompressor",
+          "substituição da junta de expansão do resfriador de óleo, com limpeza química dos dois lados e teste de estanqueidade",
+          "flushing do circuito de lubrificação, com troca do filtro e do óleo lubrificante",
+          "aferição ou substituição do sensor de pressão do óleo, do indicador do painel e do alarme de baixa pressão",
+          "registro inicial de temperaturas e pressões e teste de pressão a frio do sistema de arrefecimento",
+          "substituição da bomba de água bruta por unidade nova completa, com sobressalentes (1 rotor, 1 tampa e 1 junta)",
+          "substituição do trocador de calor por unidade nova, de casco e feixe tubular",
+          "reparo do pós-arrefecedor, com limpeza, teste hidrostático, tamponamento de tubos e troca dos anodos",
+          "substituição dos mangotes, das abraçadeiras, do filtro de água bruta e da válvula de tomada",
+          "revisão do circuito fechado: drenagem, limpeza química, revisão da bomba de circulação (selo e rolamentos), válvula termostática, tampa de pressão, correias e desaeração",
+          "substituição do jogo de juntas do cilindro e do cabeçote, com verificação de planicidade, torques e folga de válvulas, sem retífica",
+          "aferição dos sensores e indicadores de temperatura e do alarme de alta, reposição do fluido com inibidor e teste de funcionamento"
+        ],
+        "materiais": [
+          "bomba de água bruta completa e sobressalentes",
+          "trocador de calor novo",
+          "junta de expansão do resfriador de óleo",
+          "rede de óleo do turbocompressor",
+          "mangotes, abraçadeiras de aço inoxidável e filtro de água bruta",
+          "jogo de juntas do cilindro e do cabeçote",
+          "óleo lubrificante, filtro de óleo e fluido de arrefecimento com inibidor"
+        ],
+        "foraEscopo": ["a retífica do cabeçote", "a revisão geral (overhaul) do motor"],
+        "beneficios": [
+          "eliminação dos vazamentos nos sistemas de lubrificação e de arrefecimento",
+          "restabelecimento das pressões e temperaturas de operação previstas no manual do fabricante",
+          "redução do risco de avaria grave e de indisponibilidade do meio durante a navegação"
+        ],
+        "referencias": "o Manual de Operação e Manutenção MTU nº 1199112201 e o desenho de instalação MTU do Brasil nº 1199112415",
+        "prazo": "60",
+        "vigencia": "4",
+        "garantia": "180",
+        "contribuicao": "a prontidão operativa da OM"
+      }
+    },
+    {
+      "id": "bomba-centrifuga-revisao",
+      "nome": "Revisão geral de bomba centrífuga",
+      "origem": "Premissa padrão de peças degradadas (sem dispensa anterior)",
+      "equipamentos": ["bomba de incêndio", "bomba de água", "bomba de águas", "bomba de transferência", "BIE", "BAP", "BAC", "BAN", "centrífuga"],
+      "campos": {
+        "tipoObjeto": "Serviço não continuado",
+        "catTipo": "CATSER",
+        "codigo": "",
+        "unidade": "SERV",
+        "qtd": "1",
+        "servicoTitulo": "revisão geral",
+        "area": "manutenção de bombas e motores elétricos",
+        "carater": "preventivo e corretivo",
+        "servicos": [
+          "desmontagem, limpeza e inspeção da bomba, com relatório de medição de folgas e desgaste",
+          "substituição do impelidor e dos anéis de desgaste fora de tolerância",
+          "substituição do selo mecânico, dos rolamentos, das juntas e dos anéis de vedação",
+          "revisão das válvulas de sucção, de descarga e de retenção, com substituição das degradadas",
+          "revisão do motor elétrico de acionamento: limpeza, medição da resistência de isolamento, substituição dos rolamentos e rebobinamento, se a isolação estiver abaixo do mínimo",
+          "revisão do painel elétrico de comando: contatores, relé térmico, botoeiras, sinaleiros e bornes",
+          "montagem, alinhamento do conjunto e teste de funcionamento, com medição de vazão, pressão, corrente e vibração"
+        ],
+        "materiais": [
+          "impelidor e anéis de desgaste",
+          "selo mecânico",
+          "rolamentos da bomba e do motor elétrico",
+          "juntas e anéis de vedação",
+          "contatores, relé térmico e demais componentes degradados do painel de comando"
+        ],
+        "foraEscopo": ["a substituição da bomba completa", "a substituição da tubulação do sistema"],
+        "prazo": "30",
+        "vigencia": "4",
+        "garantia": "90"
+      }
+    },
+    {
+      "id": "motor-eletrico-revisao",
+      "nome": "Revisão de motor elétrico (ventilação e convés)",
+      "origem": "Premissa padrão de peças degradadas (sem dispensa anterior)",
+      "equipamentos": ["ventilador", "exaustor", "VPM", "EXB", "molinete", "motor elétrico"],
+      "campos": {
+        "tipoObjeto": "Serviço não continuado",
+        "catTipo": "CATSER",
+        "codigo": "",
+        "unidade": "SERV",
+        "qtd": "1",
+        "servicoTitulo": "revisão do motor elétrico",
+        "area": "manutenção de motores elétricos",
+        "carater": "preventivo e corretivo",
+        "servicos": [
+          "desmontagem, limpeza e secagem do motor",
+          "medição da resistência de isolamento e da resistência ôhmica dos enrolamentos, antes e depois do serviço",
+          "substituição dos rolamentos e dos retentores",
+          "rebobinamento do estator, se a isolação estiver abaixo do mínimo aceitável",
+          "balanceamento do rotor e do conjunto acionado (hélice ou tambor)",
+          "revisão do painel de partida: contatores, relé térmico, botoeiras e bornes",
+          "montagem e teste de funcionamento, com medição de corrente por fase e de vibração"
+        ],
+        "materiais": ["rolamentos e retentores", "fio esmaltado, verniz e isolantes, se houver rebobinamento", "componentes degradados do painel de partida"],
+        "foraEscopo": ["a substituição do motor completo"],
+        "prazo": "30",
+        "vigencia": "4",
+        "garantia": "90"
+      }
+    },
+    {
+      "id": "gerador-revisao",
+      "nome": "Revisão do gerador (alternador)",
+      "origem": "Premissa padrão de peças degradadas (sem dispensa anterior)",
+      "equipamentos": ["gerador", "alternador", "GER"],
+      "campos": {
+        "tipoObjeto": "Serviço não continuado",
+        "catTipo": "CATSER",
+        "codigo": "",
+        "unidade": "SERV",
+        "qtd": "1",
+        "servicoTitulo": "revisão",
+        "funcao": "é uma das duas fontes de energia elétrica do navio",
+        "area": "manutenção de máquinas elétricas",
+        "carater": "preventivo e corretivo",
+        "servicos": [
+          "limpeza e secagem dos enrolamentos do estator, do rotor e da excitatriz",
+          "medição da resistência de isolamento e do índice de polarização, antes e depois do serviço",
+          "substituição dos rolamentos",
+          "teste e substituição dos diodos da ponte retificadora rotativa degradados",
+          "aferição ou substituição do regulador automático de tensão",
+          "reaperto e substituição dos bornes e conexões degradados",
+          "teste com carga, com registro de tensão, frequência, corrente e temperatura"
+        ],
+        "materiais": ["rolamentos", "diodos e varistores da ponte retificadora", "regulador automático de tensão, se reprovado na aferição"],
+        "foraEscopo": ["o rebobinamento do estator", "a revisão do motor diesel de acionamento"],
+        "prazo": "45",
+        "vigencia": "4",
+        "garantia": "90"
+      }
+    },
+    {
+      "id": "maquina-leme-revisao",
+      "nome": "Revisão da máquina do leme",
+      "origem": "Premissa padrão de peças degradadas (sem dispensa anterior)",
+      "equipamentos": ["leme", "BML"],
+      "campos": {
+        "tipoObjeto": "Serviço não continuado",
+        "catTipo": "CATSER",
+        "codigo": "",
+        "unidade": "SERV",
+        "qtd": "1",
+        "servicoTitulo": "revisão da máquina do leme eletro-hidráulica",
+        "funcao": "governa o navio",
+        "area": "manutenção de sistemas hidráulicos navais",
+        "carater": "preventivo e corretivo",
+        "servicos": [
+          "diagnóstico inicial, com registro das pressões de trabalho e do tempo de giro de bordo a bordo",
+          "troca do óleo hidráulico e dos filtros",
+          "revisão das bombas hidráulicas, com substituição das vedações e dos rolamentos",
+          "revisão das válvulas direcionais e de alívio",
+          "substituição das vedações dos cilindros atuadores",
+          "revisão dos motores elétricos das bombas: isolamento, rolamentos e conexões",
+          "revisão do painel de comando, do indicador de ângulo do leme e dos alarmes",
+          "teste de funcionamento, com verificação do tempo de giro especificado pelo fabricante"
+        ],
+        "materiais": ["óleo hidráulico e filtros", "kits de vedação das bombas e dos cilindros", "rolamentos", "componentes degradados do painel de comando"],
+        "foraEscopo": ["a substituição da máquina do leme completa", "serviços na madre e na porta do leme"],
+        "prazo": "45",
+        "vigencia": "4",
+        "garantia": "180"
+      }
+    }
+  ]
+}

@@ -6,6 +6,7 @@ const Config = {
     preencherForm($('#formNavio'), DB.dados.navio);
     preencherForm($('#formCombCfg'), DB.dados.combConfig);
     preencherForm($('#formDispCfg'), DB.dados.dispCfg || {});
+    Processo.renderModelos();
     $('#nomeNavio').textContent = DB.dados.navio.nome || 'Departamento de Máquinas';
     const d = DB.dados;
     $('#infoBackup').textContent = 'Neste navegador: ' + d.equipamentos.length + ' equipamentos, ' + d.rotinas.length + ' rotinas, ' +

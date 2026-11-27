@@ -44,6 +44,8 @@ document.addEventListener('DOMContentLoaded', () => {
   Manut.ligar();
   Comb.ligar();
   Dispensa.ligar();
+  Processo.ligar();
+  Pacotes.ligar();
   Materiais.ligar();
   Config.ligar();
 
