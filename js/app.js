@@ -32,6 +32,7 @@ function renderTudo() {
   Materiais.render();
   Servicos.render();
   Obt.render();
+  Precos.render();
   Config.render();
 }
 
@@ -51,6 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
   Dist.carregar();
   Materiais.ligar();
   Catmat.ligar();
+  Precos.ligar();
   Servicos.ligar();
   Obt.ligar();
   Config.ligar();

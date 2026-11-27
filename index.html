@@ -561,6 +561,7 @@
     <button data-sub="empenhos" aria-selected="false">Notas de empenho</button>
     <button data-sub="pdm" aria-selected="false">Limite por PDM</button>
     <button data-sub="pncp" aria-selected="false">Processos e atas (PNCP)</button>
+    <button data-sub="precos" aria-selected="false">Pesquisa de preços</button>
   </div>
 
   <div data-subpainel="solemp">
@@ -663,6 +664,91 @@
         <div class="estreito"><label>UASG gerenciadora das atas</label><input type="text" name="uasgAtas" placeholder="784810"></div>
         <div class="estreito"><label>Limite por PDM (R$)</label><input type="text" name="limitePdm"></div>
       </form>
+    </div>
+  </div>
+
+  <div data-subpainel="precos" class="hidden">
+    <div class="card">
+      <div class="cab"><h2>Pesquisa de preços pelo recurso</h2>
+        <div class="acoes"><button class="btn ghost" id="btnPpNova">Nova pesquisa</button><button class="btn ghost" id="btnPpSalvar">Salvar</button></div></div>
+      <p class="hint">Escreva o serviço e o recurso que vai receber. O CHEMAQ sugere o CATSER ou CATMAT, junta preços reais de outros órgãos (Compras.gov.br e PNCP), faz a análise crítica e mostra quanto cabe no recurso. O preço de referência sai das fontes; para caber no recurso, ajuste a quantidade ou o escopo, não as fontes.</p>
+      <p class="hint" id="ppOrigem"></p>
+      <form id="ppForm" autocomplete="off">
+        <div class="row">
+          <div><label for="ppDesc">1. Serviço ou material</label><input type="text" id="ppDesc" name="desc" placeholder="ex.: revisão do motor diesel da embarcação, rebobinamento de motor elétrico"></div>
+          <div class="estreito" style="flex-basis:170px"><label for="ppTipo">Tipo</label><select id="ppTipo" name="tipo"><option value="S">Serviço · CATSER</option><option value="M">Material · CATMAT</option></select></div>
+          <div class="estreito"><label for="ppRec">Recurso disponível (R$)</label><input type="text" id="ppRec" name="recurso" inputmode="decimal" placeholder="7.000,00"></div>
+          <div class="estreito"><label for="ppQtd">Quantidade</label><input type="number" id="ppQtd" name="qtd" min="1" step="1"></div>
+        </div>
+        <div class="row catBusca">
+          <div><button type="button" class="btn" id="btnPpCands">Sugerir códigos</button></div>
+          <div class="estreito"><label for="ppCod">ou digite o código</label><input type="text" id="ppCod" name="codigo" inputmode="numeric" placeholder="2321"></div>
+        </div>
+        <div id="ppCands"></div>
+        <p id="ppCodigoSel" class="hint"></p>
+
+        <div id="ppPasso2">
+          <h3>2. Trazer preços</h3>
+          <div class="row">
+            <div><b>Compras.gov.br</b> (preços praticados, art. 5º, I)
+              <ol class="hint passos">
+                <li><a id="ppAbrirCompras" href="#" target="_blank" rel="noopener">Abra a consulta de preços deste código</a> (abre numa aba nova; pode levar alguns segundos).</li>
+                <li>Na aba que abriu, selecione tudo (Cmd+A ou Ctrl+A) e copie (Cmd+C ou Ctrl+C).</li>
+                <li>Cole no quadro abaixo. Os preços entram sozinhos.</li>
+              </ol>
+              <textarea id="ppColar" rows="2" placeholder="Cole aqui o resultado da consulta" aria-label="Resultado da consulta de preços"></textarea>
+              <div class="acoes"><button type="button" class="mini" id="btnPpColar">Ler o que foi colado</button></div>
+              <p class="hint" id="ppMaisPaginas"></p>
+            </div>
+            <div><b>PNCP</b> (compras parecidas de outros órgãos, art. 5º, II)
+              <p class="hint">Procura editais com as palavras do serviço, lê os itens e traz o preço homologado. Quando só há o valor estimado, ele entra desmarcado.</p>
+              <div class="acoes"><button type="button" class="btn" id="btnPpPncp">Trazer do PNCP</button>
+                <a class="btn ghost" id="ppPncpLink" href="#" target="_blank" rel="noopener">Abrir a busca no PNCP</a></div>
+              <p class="hint" id="ppPncpStatus" aria-live="polite"></p>
+            </div>
+          </div>
+          <details><summary class="hint">Lançar um orçamento ou preço de outra fonte (art. 5º, III e IV)</summary>
+            <div class="row">
+              <div class="estreito"><input type="text" id="ppManPreco" inputmode="decimal" placeholder="Preço (R$)" aria-label="Preço"></div>
+              <div><input type="text" id="ppManOrg" placeholder="Fonte: empresa, site ou órgão" aria-label="Fonte"></div>
+              <div><input type="text" id="ppManObj" placeholder="O que foi orçado" aria-label="Objeto"></div>
+              <div class="estreito"><button type="button" class="btn" id="btnPpManual">Lançar</button></div>
+            </div></details>
+
+          <h3>3. Análise crítica</h3>
+          <div class="row">
+            <div><label for="ppEscopo">Palavras do escopo (ao menos uma deve aparecer)</label><input type="text" id="ppEscopo" name="escopo" placeholder="ex.: embarcação, marítimo, MTU, diesel"></div>
+            <div class="estreito"><label for="ppUf">Só da UF</label><input type="text" id="ppUf" name="uf" maxlength="2" placeholder="todas"></div>
+            <div class="estreito"><label for="ppMeses">Período (meses)</label><input type="number" id="ppMeses" name="meses" min="1" max="24"></div>
+            <div class="estreito"><label for="ppInf">Inexequível abaixo de (% da mediana)</label><input type="number" id="ppInf" name="limInf" min="1" max="99"></div>
+            <div class="estreito"><label for="ppSup">Excessivo acima de (% da mediana)</label><input type="number" id="ppSup" name="limSup" min="101" max="1000"></div>
+            <div class="estreito"><label for="ppMet">Referência</label><select id="ppMet" name="metodo"><option value="auto">Automático</option><option value="mediana">Mediana</option><option value="media">Média</option><option value="menor">Menor preço</option></select></div>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="kpis" id="ppKpis"></div>
+    <div class="card">
+      <h2>4. Cabe no recurso?</h2>
+      <div id="ppAvisos"></div>
+      <div id="ppCabe"></div>
+      <div class="acoes" style="margin-top:10px"><button class="btn" id="btnPpMapa">Copiar mapa de preços</button>
+        <button class="btn ok" id="btnPpAplicar">Levar o preço ao item da dispensa</button></div>
+    </div>
+
+    <div class="card">
+      <h2>Fontes de preço <span class="n" id="nPpFontes">0</span></h2>
+      <p class="hint">Marcadas entram no cálculo. As desmarcadas mostram o motivo; marque ou desmarque à mão só com justificativa.</p>
+      <div class="tabela-wrap"><table class="tabela" id="tabPpFontes">
+        <thead><tr><th></th><th class="num">Preço (R$)</th><th>Objeto</th><th>Órgão · data</th><th></th></tr></thead>
+        <tbody></tbody></table></div>
+      <p class="vazio" id="vazioPpFontes">Nenhum preço ainda. Escolha um código e traga os preços no passo 2.</p>
+    </div>
+
+    <div class="card">
+      <h2>Pesquisas salvas</h2>
+      <div id="ppSalvas"></div>
     </div>
   </div>
 </section>
@@ -992,6 +1078,7 @@
 <script src="js/pacotes.js"></script>
 <script src="js/materiais.js"></script>
 <script src="js/catmat.js"></script>
+<script src="js/precos.js"></script>
 <script src="js/servicos.js"></script>
 <script src="js/painel.js"></script>
 <script src="js/ficha.js"></script>
