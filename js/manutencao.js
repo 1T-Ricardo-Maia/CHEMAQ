@@ -39,6 +39,16 @@ function situacaoRotina(r) {
   };
 }
 
+/* Leituras do horímetro com data, para calcular as horas de uso por ano (aba Material e ficha). */
+function registrarLeitura(eq, h, data) {
+  const l = eq.leituras = eq.leituras || [];
+  const d = data || hojeIso();
+  const mesmoDia = l.find(x => x.data === d);
+  if (mesmoDia) mesmoDia.h = Math.max(mesmoDia.h, h); else l.push({ data: d, h });
+  l.sort((a, b) => a.data.localeCompare(b.data));
+  if (l.length > 400) l.splice(0, l.length - 400);
+}
+
 function seloSituacao(estado) {
   return '<span class="selo-st st-' + estado + '">' + ESTADOS[estado].txt + '</span>';
 }
@@ -73,7 +83,7 @@ const Manut = {
     $('#nRotinas').textContent = DB.dados.rotinas.length;
     $('#tabRotinas tbody').innerHTML = linhas.map(({ r, s }) =>
       '<tr><td>' + seloSituacao(s.estado) + '</td>' +
-      '<td>' + esc(DB.nomeEquip(r.equipId)) + '</td>' +
+      '<td>' + linkEquip(r.equipId) + '</td>' +
       '<td>' + esc(r.descricao) + (r.referencia ? '<div class="sub">' + esc(r.referencia) + '</div>' : '') + '</td>' +
       '<td class="nowrap">' + periodicidade(r) + '</td>' +
       '<td>' + (r.base === 'horas' ? (r.ultHoras !== '' && r.ultHoras != null ? fmt(num(r.ultHoras)) + ' h' : '—') : '') +
@@ -118,7 +128,7 @@ const Manut = {
     $('#nOs').textContent = DB.dados.os.filter(o => o.status === 'Aberta').length + ' abertas';
     $('#tabOs tbody').innerHTML = lista.map(o =>
       '<tr><td class="mono">' + esc(o.numero) + '</td><td>' + dataBr(o.data) + '</td>' +
-      '<td>' + esc(DB.nomeEquip(o.equipId)) + '</td><td>' + esc(o.tipo) + '</td>' +
+      '<td>' + linkEquip(o.equipId) + '</td><td>' + esc(o.tipo) + '</td>' +
       '<td>' + esc(o.descricao) + (o.rotinaId && DB.rotina(o.rotinaId) ? '<div class="sub">Plano: ' + esc(DB.rotina(o.rotinaId).descricao) + '</div>' : '') + '</td>' +
       '<td>' + (o.status === 'Aberta' ? '<span class="selo-st st-avencer">Aberta</span>' : '<span class="selo-st st-emdia">Concluída</span>' +
         '<div class="sub">' + dataBr(o.dataConclusao) + '</div>') + '</td>' +
@@ -177,6 +187,7 @@ const Manut = {
     const eq = DB.equip(o.equipId);
     const h = num(o.horimetro);
     if (eq && h != null && (num(eq.horimetro) == null || h > num(eq.horimetro))) eq.horimetro = String(h);
+    if (eq && h != null) registrarLeitura(eq, h, o.dataConclusao);
     const r = o.rotinaId && DB.rotina(o.rotinaId);
     if (r && (!r.ultData || o.dataConclusao >= r.ultData)) {
       r.ultData = o.dataConclusao;
@@ -189,6 +200,10 @@ const Manut = {
     DB.dados.os = DB.dados.os.filter(x => x.id !== id);
     DB.salvar();
   },
+  concluirOs(id) {
+    this.abrirOs(id);
+    const f = $('#dlgOs form'); $('[name=status]', f).value = 'Concluída'; this.mostraConclusao(f);
+  },
   executarRotina(id) {
     const r = DB.rotina(id);
     this.abrirOs(null, { equipId: r.equipId, rotinaId: r.id, tipo: 'Preventiva', descricao: r.descricao, status: 'Concluída' });
@@ -200,13 +215,13 @@ const Manut = {
       SISTEMAS.indexOf(a.sistema) - SISTEMAS.indexOf(b.sistema) || (a.tag || a.nome).localeCompare(b.tag || b.nome));
     $('#nEquip').textContent = eqs.length;
     $('#tabEquip tbody').innerHTML = eqs.map(e =>
-      '<tr><td class="mono">' + esc(e.tag) + '</td><td>' + esc(e.nome) + (e.consome ? ' <span class="sub">· consome combustível</span>' : '') +
+      '<tr><td class="mono">' + esc(e.tag) + '</td><td><button class="link" data-ficha="' + e.id + '">' + esc(e.nome) + '</button>' + (e.consome ? ' <span class="sub">· consome combustível</span>' : '') +
       (e.local ? '<div class="sub">' + esc(e.local) + '</div>' : '') + '</td>' +
       '<td>' + esc(e.sistema) + '</td><td>' + esc([e.fabricante, e.modelo].filter(Boolean).join(' ')) +
       (e.serie ? '<div class="sub">S/N ' + esc(e.serie) + '</div>' : '') + '</td>' +
       '<td class="num">' + (e.horimetro !== '' && e.horimetro != null ? fmt(num(e.horimetro)) + ' h' : '—') + '</td>' +
       '<td class="botoes"><button class="mini ok" data-hor="' + e.id + '">Horímetro</button>' +
-      '<button class="mini" data-histeq="' + e.id + '">Histórico</button>' +
+      '<button class="mini" data-ficha="' + e.id + '">Ficha</button>' +
       '<button class="mini" data-edeq="' + e.id + '">Editar</button>' +
       '<button class="mini del" data-deleq="' + e.id + '">Excluir</button></td></tr>').join('');
     $('#vazioEquip').classList.toggle('hidden', eqs.length > 0);
@@ -244,6 +259,7 @@ const Manut = {
     if (num(e.horimetro) != null && n < num(e.horimetro) &&
       !confirmar('A leitura é menor que a anterior (' + fmt(num(e.horimetro)) + ' h). Gravar mesmo assim?')) return;
     e.horimetro = String(n);
+    registrarLeitura(e, n, hojeIso());
     DB.salvar();
     toast('Horímetro atualizado.');
   },
@@ -263,7 +279,7 @@ const Manut = {
     $('#listaHist').innerHTML = lista.map(o =>
       '<li><div class="quando">' + dataBr(o.dataConclusao) + (o.horimetro ? ' · ' + fmt(num(o.horimetro)) + ' h' : '') +
       ' · OS ' + esc(o.numero) + ' · ' + esc(o.tipo) + '</div>' +
-      '<div class="oque">' + esc(DB.nomeEquip(o.equipId)) + ' — ' + esc(o.descricao) + '</div>' +
+      '<div class="oque">' + linkEquip(o.equipId) + ' — ' + esc(o.descricao) + '</div>' +
       '<div class="det">' + esc([o.executado, o.pecas ? 'Peças: ' + o.pecas : '', o.executante ? 'Executante: ' + o.executante : '']
         .filter(Boolean).join('\n')) + '</div></li>').join('');
     $('#vazioHist').classList.toggle('hidden', lista.length > 0);
@@ -301,10 +317,7 @@ const Manut = {
       if (d.exec) this.executarRotina(d.exec);
       else if (d.edrot) this.abrirRotina(d.edrot);
       else if (d.delrot) this.excluirRotina(d.delrot);
-      else if (d.concluir) {
-        this.abrirOs(d.concluir);
-        const f = $('#dlgOs form'); $('[name=status]', f).value = 'Concluída'; this.mostraConclusao(f);
-      }
+      else if (d.concluir) this.concluirOs(d.concluir);
       else if (d.edos) this.abrirOs(d.edos);
       else if (d.delos) this.excluirOs(d.delos);
       else if (d.dispensa) Dispensa.deOs(d.dispensa);

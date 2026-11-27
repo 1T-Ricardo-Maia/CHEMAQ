@@ -170,7 +170,7 @@ function textosBase(P) {
     'objeto, e a reunião dos serviços em item único afasta o fracionamento indevido de despesa vedado pelo art. 75, § 1º, da Lei nº 14.133/2021.';
 
   const valorTxt = valor != null ? 'R$ ' + moeda(valor) + ' (' + extensoReais(valor) + ')' : 'R$ [valor]';
-  t.dfdValor = 'O custo estimado da contratação é de ' + valorTxt + ', correspondente à média das amostras da Pesquisa de Preços nº ' +
+  t.dfdValor = 'O custo estimado da contratação é de ' + valorTxt + ', correspondente ' + ({ mediana: 'à mediana', menor: 'ao menor preço' }[P.criterioPreco] || 'à média') + ' das amostras da Pesquisa de Preços nº ' +
     (P.pesquisaNum || '[nº]') + ', realizada no Compras.gov.br nos termos do art. 23 da Lei nº 14.133/2021 e da IN SEGES/ME nº 65/2021.';
   t.dfdData = 'A conclusão da contratação está prevista para ocorrer no mês de ' + (P.mes || MESES[new Date().getMonth()]) + ' do presente ano.';
   t.dfdPrioridade = (P.prioridade || 'ALTA') + '.';
@@ -190,6 +190,11 @@ function textosBase(P) {
     'referida norma, com a intenção de suprir a necessidade de levantamento de preços condizente com a realidade mercadológica no ' +
     'subsídio do processo em tela. Ademais, a medida de tendência central utilizada foi a média, para o referido item.';
 
+  const orcs = (P.orcamentos || []).filter(o => num(String(o.valor || '').replace(/\./g, '')) > 0);
+  if (orcs.length) t.mercado += ' Foram obtidas ' + orcs.length + ' (' + extensoInteiro(orcs.length).replace(/^um$/, 'uma').replace(/^dois$/, 'duas') +
+    ') propostas diretas de fornecedores especializados, com base no mesmo escopo técnico, e adotou-se como valor estimado ' +
+    ({ mediana: 'a mediana', menor: 'o menor' }[P.criterioPreco] || 'a média') + ' dos preços obtidos.';
+
   t.solucao = (material
     ? 'Será adquirido o material especificado, novo, de primeiro uso, original ou tecnicamente equivalente ao especificado pelo fabricante'
     : 'Será contratada empresa especializada em ' + (P.area || 'manutenção de equipamentos navais') + ' para executar, ' +
@@ -201,6 +206,7 @@ function textosBase(P) {
     'conforme o art. 23 da Lei nº 14.133/2021 e a IN SEGES/ME nº 65/2021; (iii) publicação do aviso de contratação direta no PNCP, com ' +
     'prazo mínimo de 3 (três) dias úteis (art. 75, § 3º); (iv) emissão da nota de empenho; e (v) ' +
     (material ? 'entrega do material' : 'execução do serviço a bordo') + ', com recebimento provisório e definitivo pela fiscalização.' +
+    (P.premissa ? '\n\n' + P.premissa : '') +
     (fora.length ? '\n\nNão integram o objeto ' + enumerar(fora) + '. Constatada a necessidade de alguma dessas providências durante a ' +
       'execução, ela será tratada em processo específico ou por alteração contratual, conforme previsto no Termo de Referência.' : '');
 
@@ -271,6 +277,7 @@ function textosBase(P) {
     'especificados pelo fabricante, vedado o emprego de peças remanufaturadas, recondicionadas ou usadas.\n\n' +
     'A indicação do fabricante e do modelo do equipamento' + (P.identificacao ? ' (' + P.identificacao.split(',')[0].replace(/^\w+\s(diesel\s)?(marítimo\s)?/, '') + ')' : '') +
     ', bem como a referência a manuais e desenhos, destina-se apenas a identificar o equipamento existente a bordo, vedada a exigência de marca.\n\n' +
+    (linhasDe(P.aceitacao).length ? 'Constituem critérios técnicos de aceitação do serviço:\n' + alineas(linhasDe(P.aceitacao)) + '\n\n' : '') +
     'O recebimento provisório não implica aceitação definitiva do ' + (material ? 'material' : 'serviço') + '.\n\n' +
     'Não haverá exigência da garantia da contratação dos arts. 96 e seguintes da Lei nº 14.133, de 2021, pelas razões constantes do Estudo Técnico Preliminar.';
   t.trExecucao = '5.1. O prazo de ' + (material ? 'entrega' : 'execução do serviço') + ' é de ' + prazo + ' (' + extensoInteiro(prazo) +
@@ -319,6 +326,10 @@ function textoFinal(P, chave, padrao) {
 const Dispensa = {
   atual: null,
   doc: 'atos',
+  _auto: {},
+  /* Modo rápido: o formulário abre só com os campos em branco (os preenchidos pelo pacote, pela aba
+   * Material ou Serviço e os textos automáticos ficam recolhidos). Preferência guardada no navegador. */
+  soFalta: (() => { try { return localStorage.getItem('chemaq.dispSoFalta') !== '0'; } catch (e) { return true; } })(),
 
   lista() { return DB.dados.dispensas || (DB.dados.dispensas = []); },
 
@@ -381,6 +392,7 @@ const Dispensa = {
     $('#dJson').value = '';
     $('#dispEditor').classList.remove('hidden');
     this.renderDocs();
+    this.aplicarModo();
     $('#dispEditor').scrollIntoView({ behavior: 'smooth', block: 'start' });
   },
 
@@ -459,7 +471,7 @@ const Dispensa = {
   /* Partes do formulário que dependem dos dados: escolhas, textos automáticos, contadores e progresso. */
   renderForm(P, pad) {
     const f = $('#formDisp'), C = DB.dados.dispCfg || {};
-    const auto = metaAuto(P, pad);
+    const auto = this._auto = metaAuto(P, pad);
     ['assunto', 'finalidade', 'contribuicao', 'comissionado'].forEach(k => { f.elements[k].placeholder = auto[k]; });
     const v = num(P.valor);
     $('#valorExtenso').textContent = v != null ? 'R$ ' + moeda(v) + ' · ' + extensoReais(v) : '';
@@ -483,9 +495,44 @@ const Dispensa = {
       $('.cont', d).classList.toggle('ok', n === t);
       feitos += n; total += t;
     });
+    this.renderFalta();
     const pct = total ? Math.round(feitos / total * 100) : 0;
     $('#dispProgN').textContent = feitos + '/' + total + ' · ' + pct + '%';
     $('#dispProgBarra').style.width = pct + '%';
+  },
+
+  /* Campos do Passo 2 ainda em branco (sem valor e sem texto automático). */
+  faltando() {
+    return $$('#formDisp details.secao:not(#secOrg) [name]').filter(el => el.type !== 'hidden' && !el.classList.contains('hidden') &&
+      !String(el.value).trim() && !(el.name in this._auto && el.placeholder)).map(el => {
+      const lab = el.closest('div') && $('label', el.closest('div'));
+      return { el, rot: lab ? lab.textContent.replace(/\s*\*$/, '') : el.name };
+    });
+  },
+  renderFalta() {
+    const f = this.faltando();
+    $('#dispSoFalta').checked = this.soFalta;
+    $('#dispFalta').innerHTML = f.length
+      ? '<span class="sub">Falta:</span>' + f.map(x => '<button type="button" class="chip" data-falta="' + esc(x.el.name) + '">' + esc(x.rot) + '</button>').join('')
+      : '<span class="sub ok-ink">Todos os campos do processo preenchidos.</span>';
+  },
+  /* Esconde (no modo rápido) os campos já preenchidos e as seções completas. Só roda ao abrir e ao
+   * ligar/desligar o modo, para um campo não sumir enquanto a pessoa digita nele. */
+  aplicarModo() {
+    const falta = new Set(this.faltando().map(x => x.el));
+    $$('#formDisp details.secao').forEach(d => {
+      if (d.id === 'secOrg') { d.classList.toggle('hidden', this.soFalta && !$('#dispOrg .alerta')); return; }
+      let n = 0;
+      $$('[name]', d).forEach(el => {
+        const w = el.closest('div'); if (!w || w === d) return;
+        const tem = falta.has(el);
+        if (tem) n++;
+        w.classList.toggle('oculto', this.soFalta && !tem);
+      });
+      d.classList.toggle('hidden', this.soFalta && !n);
+      if (this.soFalta && n) d.open = true;
+    });
+    $('#cardIA').classList.toggle('hidden', this.soFalta);
   },
 
   escolher(campo, valor) {
@@ -644,6 +691,18 @@ const Dispensa = {
       espera = setTimeout(() => this.gravar(), 400);
     });
     f.addEventListener('submit', e => e.preventDefault());
+    $('#dispSoFalta').addEventListener('change', e => {
+      this.soFalta = e.target.checked;
+      try { localStorage.setItem('chemaq.dispSoFalta', this.soFalta ? '1' : '0'); } catch (err) { /* só nesta visita */ }
+      this.aplicarModo();
+    });
+    $('#dispFalta').addEventListener('click', e => {
+      const b = e.target.closest('[data-falta]'); if (!b) return;
+      const el = f.elements[b.dataset.falta]; if (!el) return;
+      const d = el.closest('details'); if (d) { d.classList.remove('hidden'); d.open = true; }
+      const w = el.closest('div'); if (w) w.classList.remove('oculto');
+      el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
     $('#tabDispItens').addEventListener('change', e => { if (e.target.dataset.item != null) this.mudarItem(e.target); });
 
     $('#tab-dispensa').addEventListener('click', e => {

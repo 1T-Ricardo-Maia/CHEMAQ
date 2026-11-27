@@ -39,8 +39,62 @@ function carregarScript(url) {
   });
 }
 
+/* Consumo de planejamento por região (litros por milha, "tudo incluído": propulsão e o gerador do dia),
+ * calculado em nov/2026 sobre o CONTROLE CLG e a tabela de distâncias:
+ *  - Belém–Marajó (baía, estreitos e rios até Breves/Portel): 7,6 L/nm medido em 366 nm; planejar 8,5;
+ *  - Rio Amazonas subindo (Breves–Almeirim 11,3; Almeirim–Prainha 12,8; Prainha–Monte Alegre 10,8): 11 a 13;
+ *  - Rio Amazonas descendo: sem medição ainda (usa a média medida, se houver).
+ * Parado: na base 125 a 170 L/dia; em comissão (atendimento, fundeado operando) cerca de 430 L/dia.
+ * Os valores são editáveis no cartão Planejar comissão e ficam em combConfig. */
+const REGIOES = [
+  { id: 'marajo', nome: 'Belém–Marajó', det: 'baía, estreitos e rios até Breves e Portel', lpm: '8.5' },
+  { id: 'amzSobe', nome: 'Amazonas, subindo', det: 'de Gurupá para cima, contra a correnteza', lpm: '12' },
+  { id: 'amzDesce', nome: 'Amazonas, descendo', det: 'a favor da correnteza (sem medição ainda)', lpm: '' }
+];
+const PARADO_PADRAO = { base: '150', comissao: '430' };
+/* Localidades da tabela de distâncias que ficam na região Belém–Marajó; as demais são do Amazonas. */
+const LOCAIS_MARAJO = ['BNVC', 'Cotijuba', 'Mosqueiro', 'Barcarena', 'Ponta de Pedras', 'Abaetetuba', 'Cametá', 'Ponta Negra',
+  'SSBV', 'Curralinho', 'Breves', 'Portel', 'Antônio Lemos', 'Vista Alegre do Jaburu'];
+
 const Comb = {
   /* ───────── cálculos ───────── */
+
+  regioesCfg() {
+    const c = DB.dados.combConfig = DB.dados.combConfig || {};
+    const r = c.regioes = c.regioes || {};
+    REGIOES.forEach(g => { if (r[g.id] == null) r[g.id] = g.lpm; });
+    if (c.paradoBase == null) c.paradoBase = '';
+    if (c.paradoComissao == null) c.paradoComissao = PARADO_PADRAO.comissao;
+    return c;
+  },
+  lpmRegiao(id) { return num(this.regioesCfg().regioes[id]); },
+
+  /* Região de um trecho pela tabela de distâncias: tudo dentro de Belém–Marajó, ou Amazonas subindo/descendo
+   * conforme o destino fica mais longe ou mais perto de Belém que a origem. null se não reconhece. */
+  regiaoDe(trecho) {
+    if (!trecho || !Dist.matriz.length) return null;
+    const p = Dist.paradas(trecho).map(n => Dist.local(n));
+    if (p.length < 2 || p.includes(-1)) return null;
+    const marajo = new Set(LOCAIS_MARAJO.map(n => Dist.local(n)));
+    if (p.every(i => marajo.has(i))) return 'marajo';
+    const bnvc = Dist.local('BNVC');
+    const dIni = Dist.matriz[bnvc][p[0]] || 0, dFim = Dist.matriz[bnvc][p[p.length - 1]] || 0;
+    return dFim >= dIni ? 'amzSobe' : 'amzDesce';
+  },
+
+  /* Motores de propulsão (tags MCP...), que recebem as horas de navegação da sondagem. */
+  motoresPropulsao() { return DB.dados.equipamentos.filter(e => /^MCP/i.test(e.tag || '')); },
+  horasNavParaMotores(h) {
+    const o = {};
+    if (num(h)) this.motoresPropulsao().forEach(e => { o[e.id] = num(h); });
+    return o;
+  },
+  /* Litros por hora de navegação, nas sondagens que trazem as horas. */
+  lphNavegando() {
+    let l = 0, h = 0;
+    this.serie().forEach(x => { const hn = num(x.l.horasNav); if (hn && x.consumo) { l += x.consumo; h += hn; } });
+    return h ? { lph: l / h, horas: h } : null;
+  },
 
   ordenados() {
     return DB.dados.combustivel.slice().sort((a, b) => (a.data + (a.hora || '')).localeCompare(b.data + (b.hora || '')));
@@ -147,7 +201,8 @@ const Comb = {
       kpi('Consumo por milha', est.lpm != null ? fmt(est.lpm, 1) : '—', 'L/nm',
         est.lpm != null ? 'média de ' + fmt(est.milhas) + ' nm navegadas' : 'informe as milhas dos trechos') +
       kpi('Autonomia navegando', rob != null && est.lpm ? fmt(rob / est.lpm) : '—', 'nm', est.lpm ? 'com o ROB atual, sem reserva' : 'precisa da média por milha') +
-      kpi('Parado', porto != null ? fmt(porto) : '—', 'L/dia', 'lançamentos sem trecho');
+      kpi('Parado', porto != null ? fmt(porto) : '—', 'L/dia', 'lançamentos sem trecho') +
+      (() => { const n = this.lphNavegando(); return n ? kpi('Navegando', fmt(n.lph), 'L/h', 'em ' + fmt(n.horas, 1) + ' h de navegação informadas') : ''; })();
   },
 
   colunasMotores() {
@@ -167,7 +222,7 @@ const Comb = {
       '<th class="num">ROB calc.</th><th class="num">Sondagem</th><th class="num">Milhas</th><th class="num">L/nm</th><th></th></tr>';
     $('#tabComb tbody').innerHTML = s.map(x => {
       const l = x.l;
-      const sub = [l.trecho ? esc(l.situacao) : '', l.dia ? 'dia ' + esc(l.dia) : '', esc(l.comissao || ''), esc(l.obs || '')].filter(Boolean).join(' · ');
+      const sub = [l.trecho ? esc(l.situacao) : '', l.dia ? 'dia ' + esc(l.dia) : '', num(l.horasNav) ? fmt(num(l.horasNav), 1) + ' h de navegação' : '', esc(l.comissao || ''), esc(l.obs || '')].filter(Boolean).join(' · ');
       return '<tr><td>' + dataBr(l.data) + (l.origem === 'planilha' ? '<div class="sub">planilha</div>' : '') + '</td>' +
         '<td>' + esc(l.trecho || l.situacao || '') + (sub ? '<div class="sub">' + sub + '</div>' : '') + '</td>' +
         motores.map(m => {
@@ -290,16 +345,51 @@ const Comb = {
 
   plano() {
     const p = DB.dados.planoComb = DB.dados.planoComb || {};
-    if (!Array.isArray(p.pernas) || !p.pernas.length) p.pernas = [{ trecho: '', milhas: '' }];
+    if (!Array.isArray(p.pernas) || !p.pernas.length) p.pernas = [{ trecho: '', milhas: '', base: '' }];
     if (p.reserva == null) p.reserva = '10';
     return p;
   },
 
+  /* Litros por milha de uma perna. base: '' (automático) | id de região | 'trecho' | 'geral'.
+   * Automático: a região do trecho (se tiver valor), senão a média medida no trecho, senão a média geral. */
+  lpmPerna(x, est) {
+    const t = x.trecho ? est.lista.find(g => chaveTrecho(g.t.nome) === chaveTrecho(x.trecho)) : null;
+    const medido = t && t.lpm != null ? t.lpm : null;
+    const reg = this.regiaoDe(x.trecho);
+    const nomeReg = id => (REGIOES.find(g => g.id === id) || {}).nome;
+    if (x.base === 'trecho') return { lpm: medido, origem: 'medido no trecho' };
+    if (x.base === 'geral') return { lpm: est.lpm, origem: 'média geral medida' };
+    if (x.base) return { lpm: this.lpmRegiao(x.base), origem: nomeReg(x.base) };
+    if (reg && this.lpmRegiao(reg) != null) return { lpm: this.lpmRegiao(reg), origem: nomeReg(reg) + ' (auto)' };
+    if (medido != null) return { lpm: medido, origem: 'medido no trecho' };
+    return { lpm: est.lpm, origem: est.lpm != null ? 'média geral medida' : '' };
+  },
+  opcoesBase(x, est) {
+    const t = x.trecho ? est.lista.find(g => chaveTrecho(g.t.nome) === chaveTrecho(x.trecho)) : null;
+    const o = (v, txt) => '<option value="' + v + '"' + ((x.base || '') === v ? ' selected' : '') + '>' + esc(txt) + '</option>';
+    return o('', 'Automático') + REGIOES.map(g => o(g.id, g.nome + (this.lpmRegiao(g.id) != null ? ' · ' + fmt(this.lpmRegiao(g.id), 1) : ''))).join('') +
+      o('trecho', 'Medido no trecho' + (t && t.lpm != null ? ' · ' + fmt(t.lpm, 1) : ' (sem dado)')) +
+      o('geral', 'Média geral' + (est.lpm != null ? ' · ' + fmt(est.lpm, 1) : ' (sem dado)'));
+  },
+
+  renderRegioes() {
+    const c = this.regioesCfg();
+    const porto = this.mediaPorto();
+    $('#planoRegioes').innerHTML = REGIOES.map(g => '<div class="estreito"><label title="' + esc(g.det) + '">' + esc(g.nome) + ' (L/nm)</label>' +
+      '<input type="number" step="any" min="0" data-regiao="' + g.id + '" value="' + esc(c.regioes[g.id]) + '" placeholder="medido"></div>').join('') +
+      '<div class="estreito"><label>Parado na base (L/dia)</label><input type="number" step="any" min="0" data-parado="paradoBase" value="' + esc(c.paradoBase) +
+      '" placeholder="' + (porto != null ? fmt(porto) + ' medido' : PARADO_PADRAO.base) + '"></div>' +
+      '<div class="estreito"><label>Parado em comissão (L/dia)</label><input type="number" step="any" min="0" data-parado="paradoComissao" value="' + esc(c.paradoComissao) + '" placeholder="' + PARADO_PADRAO.comissao + '"></div>';
+  },
+
   renderPlano() {
     const p = this.plano();
+    const est = this.estatTrechos();
+    this.renderRegioes();
     $('#planoPernas').innerHTML = p.pernas.map((x, i) => {
       const auto = this.milhasTrecho(x.trecho), proprio = num(x.milhas) != null;
-      return '<tr data-perna="' + i + '"><td><input type="text" list="listaTrechos" data-pc="trecho" value="' + esc(x.trecho) + '" placeholder="Belém x Breves" aria-label="Trecho ' + (i + 1) + '"></td>' +
+      return '<tr data-perna="' + i + '"><td><input type="text" list="listaTrechos" data-pc="trecho" value="' + esc(x.trecho) + '" placeholder="Belém x Breves" aria-label="Trecho ' + (i + 1) + '">' +
+      '<select data-pc="base" class="baseCons" aria-label="Consumo do trecho ' + (i + 1) + '" title="De onde vem o consumo por milha">' + this.opcoesBase(x, est) + '</select></td>' +
       '<td class="num">' + campoMilhas('data-pc="milhas"', proprio ? x.milhas : auto, !proprio && auto != null, auto, 'Milhas do trecho ' + (i + 1), auto != null ? origemMilhas(x.trecho) : '') + '</td>' +
       '<td class="num" data-saida="lpm"></td><td class="num" data-saida="litros"></td>' +
       '<td class="botoes"><button class="mini del" data-delperna="' + i + '" aria-label="Remover trecho ' + (i + 1) + '">×</button></td></tr>';
@@ -313,36 +403,40 @@ const Comb = {
     const p = this.plano();
     const est = this.estatTrechos();
     const porto = this.mediaPorto();
+    const c = this.regioesCfg();
     let milhas = 0, litros = 0, semMedia = 0;
     $$('#planoPernas tr').forEach((tr, i) => {
       const x = p.pernas[i] || {};
       const nm = num(x.milhas) != null ? num(x.milhas) : this.milhasTrecho(x.trecho);
-      const t = x.trecho ? est.lista.find(g => chaveTrecho(g.t.nome) === chaveTrecho(x.trecho)) : null;
-      const lpm = t && t.lpm != null ? t.lpm : est.lpm;
+      const { lpm, origem } = this.lpmPerna(x, est);
       const l = nm && lpm != null ? nm * lpm : null;
       if (nm) milhas += nm;
       if (l != null) litros += l; else if (nm) semMedia++;
-      $('[data-saida=lpm]', tr).innerHTML = lpm != null ? fmt(lpm, 1) + '<div class="sub">' + (t && t.lpm != null ? 'do trecho' : 'média geral') + '</div>' : '—';
+      $('[data-saida=lpm]', tr).innerHTML = lpm != null ? fmt(lpm, 1) + '<div class="sub">' + esc(origem) + '</div>' : '—';
       $('[data-saida=litros]', tr).textContent = l != null ? fmt(l) : '—';
     });
     const dias = num(p.diasPorto) || 0;
-    const lDia = num(p.litrosDia) != null ? num(p.litrosDia) : porto;
+    const lDia = num(p.litrosDia) != null ? num(p.litrosDia) : num(c.paradoBase) != null ? num(c.paradoBase) : porto != null ? porto : num(PARADO_PADRAO.base);
     const parado = dias && lDia != null ? dias * lDia : 0;
-    const subtotal = litros + parado;
+    const diasC = num(p.diasComissao) || 0;
+    const lDiaC = num(c.paradoComissao) != null ? num(c.paradoComissao) : num(PARADO_PADRAO.comissao);
+    const paradoC = diasC * lDiaC;
+    const subtotal = litros + parado + paradoC;
     const margem = subtotal * (num(p.reserva) || 0) / 100;
     const total = subtotal + margem;
     const rob = this.robAtual();
     const sobra = rob != null ? rob - total : null;
-    $('[name=litrosDia]', $('#formPlano')).placeholder = porto != null ? fmt(porto) + ' (média)' : 'L/dia';
+    $('[name=litrosDia]', $('#formPlano')).placeholder = lDia != null ? fmt(lDia) + ' L/dia' : 'L/dia';
     $('#planoResumo').innerHTML =
       linhaPlano('Navegando', fmt(milhas) + ' nm', fmt(litros) + ' L') +
-      linhaPlano('Parado', fmt(dias) + ' dias × ' + (lDia != null ? fmt(lDia) : '—') + ' L/dia', fmt(parado) + ' L') +
+      linhaPlano('Parado em comissão', fmt(diasC) + ' dias × ' + fmt(lDiaC) + ' L/dia', fmt(paradoC) + ' L') +
+      linhaPlano('Parado na base', fmt(dias) + ' dias × ' + (lDia != null ? fmt(lDia) : '—') + ' L/dia', fmt(parado) + ' L') +
       linhaPlano('Margem', fmt(num(p.reserva) || 0) + '%', fmt(margem) + ' L') +
       linhaPlano('<b>Consumo previsto</b>', '', '<b>' + fmt(total) + ' L</b>') +
       linhaPlano('ROB atual', '', fmt(rob) + ' L') +
       linhaPlano('<b>ROB ao fim da comissão</b>', '', '<b class="' + (sobra != null && sobra < 0 ? 'dif-neg' : '') + '">' + fmt(sobra) + ' L</b>');
     const avisos = [];
-    if (semMedia) avisos.push(semMedia + ' trecho(s) sem média de consumo: lance sondagens com trecho e informe as milhas na tabela de trechos.');
+    if (semMedia) avisos.push(semMedia + ' trecho(s) sem consumo por milha: escolha outra opção abaixo do nome do trecho ou informe o valor da região em “Consumo por região”.');
     if (sobra != null && sobra < 0) avisos.push('O ROB não cobre a comissão: faltam ' + fmt(-sobra) + ' L. Programe recebimento.');
     $('#planoAviso').textContent = avisos.join(' ');
     $('#planoAviso').classList.toggle('hidden', !avisos.length);
@@ -379,6 +473,7 @@ const Comb = {
         v('Serviço', r.servico != null ? fmt(r.servico) : null, 'L') +
         (r.recebido != null ? v('Recebido', fmt(r.recebido), 'L') : '') + (r.transferido != null ? v('Transferido', fmt(r.transferido), 'L') : '') +
         (r.dia != null ? v('Dia da comissão', r.dia) : '') +
+        (r.horasNav != null ? v('Navegação', fmt(r.horasNav, 1), 'h') : '') +
         (r.aguada != null || r.consumoAgua != null ? v('Aguada', fmt(r.aguada), 'L') + v('Consumo de água', fmt(r.consumoAgua), 'L') : '') +
         '</div>' +
         (dup ? '<p class="aviso">Já existe lançamento em ' + dataBr(r.data) + ' com ' + fmt(num(r.consumo)) + ' L. Marque só se for outra sondagem.</p>' : '') +
@@ -398,7 +493,10 @@ const Comb = {
     if (!marcadas.length) return false;
     marcadas.forEach(r => {
       if (r.trecho) this.garantirTrecho(r.trecho);
-      DB.dados.combustivel.push(Object.assign({ id: novoId('cb'), origem: 'sondagem' }, this.registroDeSondagem(r)));
+      const reg = Object.assign({ id: novoId('cb'), origem: 'sondagem' }, this.registroDeSondagem(r));
+      reg.horasSomadas = this.horasNavParaMotores(reg.horasNav);
+      this.ajustarHorimetros({}, reg.horasSomadas);
+      DB.dados.combustivel.push(reg);
     });
     DB.salvar();
     const semMilhas = [...new Set(marcadas.filter(r => r.trecho && this.milhasDe(r) == null).map(r => r.trecho))];
@@ -412,7 +510,7 @@ const Comb = {
       data: r.data || hojeIso(), situacao: r.trecho ? 'Viagem' : 'Porto', trecho: g(r.trecho), comissao: g(r.comissao), dia: g(r.dia),
       anterior: g(r.anterior), robMedido: g(r.atual), consumo: g(r.consumo), recebido: g(r.recebido), transferido: g(r.transferido),
       beM: g(r.beM), beL: g(r.beL), bbM: g(r.bbM), bbL: g(r.bbL), servico: g(r.servico),
-      aguada: g(r.aguada), consumoAgua: g(r.consumoAgua), texto: r.texto || '', avisos: r.avisos || []
+      aguada: g(r.aguada), consumoAgua: g(r.consumoAgua), horasNav: g(r.horasNav), texto: r.texto || '', avisos: r.avisos || []
     };
   },
 
@@ -442,10 +540,14 @@ const Comb = {
       if (t && !num(t.milhas) && num(o.milhas)) { t.milhas = o.milhas; o.milhas = ''; }
       else if (t && num(t.milhas) === num(o.milhas)) o.milhas = '';
     }
-    if (id) Object.assign(DB.dados.combustivel.find(x => x.id === id), o);
+    const reg = id ? DB.dados.combustivel.find(x => x.id === id) : null;
+    const antes = (reg && reg.horasSomadas) || {};
+    o.horasSomadas = this.horasNavParaMotores(o.horasNav);
+    this.ajustarHorimetros(antes, o.horasSomadas);
+    if (reg) Object.assign(reg, o);
     else DB.dados.combustivel.push(Object.assign({ id: novoId('cb'), origem: 'sondagem' }, o));
     DB.salvar();
-    toast('Sondagem salva.');
+    toast('Sondagem salva.' + (Object.keys(o.horasSomadas).length ? ' Horas de navegação somadas aos horímetros dos MCP.' : ''));
   },
 
   /* ───────── lançamento do dia por motor ───────── */
@@ -500,7 +602,9 @@ const Comb = {
       const eq = DB.equip(eqId); if (!eq) return;
       const delta = (agora[eqId] || 0) - (antes[eqId] || 0);
       if (!delta) return;
-      eq.horimetro = String(Math.round(((num(eq.horimetro) || 0) + delta) * 10) / 10);
+      const h0 = num(eq.horimetro);
+      eq.horimetro = String(Math.round(((h0 || 0) + delta) * 10) / 10);
+      if (h0 != null) registrarLeitura(eq, num(eq.horimetro), hojeIso());
     });
   },
 
@@ -545,11 +649,11 @@ const Comb = {
 
   csv() {
     const motores = this.colunasMotores();
-    const cab = this.CABECALHO_REGISTRO.concat(['Milhas (nm)', 'L/nm', 'BE (m)', 'BB (m)', 'ROB calculado (L)'],
+    const cab = this.CABECALHO_REGISTRO.concat(['Milhas (nm)', 'L/nm', 'BE (m)', 'BB (m)', 'ROB calculado (L)', 'Horas de navegação'],
       ...motores.map(m => [(m.tag || m.nome) + ' (L)', (m.tag || m.nome) + ' (h)']));
     const linhas = [cab];
     this.serie().forEach(x => linhas.push(this.linhaRegistro(x).concat(
-      [x.milhas || '', x.lpm != null ? Math.round(x.lpm * 10) / 10 : '', x.l.beM || '', x.l.bbM || '', x.calc == null ? '' : x.calc],
+      [x.milhas || '', x.lpm != null ? Math.round(x.lpm * 10) / 10 : '', x.l.beM || '', x.l.bbM || '', x.calc == null ? '' : x.calc, x.l.horasNav || ''],
       ...motores.map(m => { const c = (x.l.consumos || {})[m.id] || {}; return [c.litros || '', c.horas || '']; }))));
     baixarArquivo('controle-clg-' + hojeIso() + '.csv', paraCsv(linhas), 'text/csv;charset=utf-8');
   },
@@ -615,6 +719,11 @@ const Comb = {
     $('#btnSondManual').onclick = () => this.abrirSondagem();
     $('#btnCsvComb').onclick = () => this.csv();
     $('#txtSond').addEventListener('input', () => this.previa());
+    $('#btnLerClip').onclick = () => {
+      if (!navigator.clipboard || !navigator.clipboard.readText) { toast('Este navegador não deixa ler a área de transferência: cole com o dedo ou Ctrl+V.', true); return; }
+      navigator.clipboard.readText().then(t => { $('#txtSond').value = t; this.previa(); },
+        () => toast('Sem permissão para ler a área de transferência: cole com o dedo ou Ctrl+V.', true));
+    };
     $('#inPlanilhaClg').onchange = async e => {
       const arq = e.target.files[0]; e.target.value = '';
       if (!arq) return;
@@ -648,13 +757,14 @@ const Comb = {
     /* Plano: grava sem redesenhar a tela, para o cursor não pular. */
     const gravaPlano = () => { DB.salvar(true); this.calcPlano(); };
     $('#planoPernas').addEventListener('input', e => {
-      const inp = e.target.closest('[data-pc]'); if (!inp) return;
+      const inp = e.target.closest('[data-pc]'); if (!inp || inp.dataset.pc === 'base') return;
       const i = Number(inp.closest('tr').dataset.perna);
       const perna = this.plano().pernas[i];
       perna[inp.dataset.pc] = inp.value;
       if (inp.dataset.pc === 'trecho') {
         /* Trecho novo: as milhas voltam a vir do trecho (digitadas na tabela de trechos ou da tabela de distâncias). */
         perna.milhas = '';
+        $('[data-pc=base]', inp.closest('tr')).innerHTML = this.opcoesBase(perna, this.estatTrechos());
         const auto = this.milhasTrecho(inp.value), campo = $('[data-pc=milhas]', inp.closest('tr'));
         campo.value = auto != null ? auto : '';
         marcarAuto(campo, auto != null ? origemMilhas(inp.value) : '');
@@ -665,12 +775,24 @@ const Comb = {
       }
       gravaPlano();
     });
+    $('#planoPernas').addEventListener('change', e => {
+      const sel = e.target.closest('[data-pc=base]'); if (!sel) return;
+      this.plano().pernas[Number(sel.closest('tr').dataset.perna)].base = sel.value;
+      gravaPlano();
+    });
+    $('#planoRegioes').addEventListener('input', e => {
+      const c = this.regioesCfg(), t = e.target;
+      if (t.dataset.regiao) c.regioes[t.dataset.regiao] = t.value.trim();
+      else if (t.dataset.parado) c[t.dataset.parado] = t.value.trim();
+      gravaPlano();
+    });
+    $('#planoRegioes').addEventListener('change', () => this.renderPlano());
     $('#planoPernas').addEventListener('click', e => {
       const b = e.target.closest('[data-delperna]'); if (!b) return;
       this.plano().pernas.splice(Number(b.dataset.delperna), 1);
       DB.salvar(true); this.renderPlano();
     });
-    $('#btnAddPerna').onclick = () => { this.plano().pernas.push({ trecho: '', milhas: '' }); DB.salvar(true); this.renderPlano(); $$('#planoPernas [data-pc=trecho]').pop().focus(); };
+    $('#btnAddPerna').onclick = () => { this.plano().pernas.push({ trecho: '', milhas: '', base: '' }); DB.salvar(true); this.renderPlano(); $$('#planoPernas [data-pc=trecho]').pop().focus(); };
     $('#btnLimparPlano').onclick = () => { DB.dados.planoComb = {}; DB.salvar(true); this.renderPlano(); };
     $('#formPlano').addEventListener('input', () => { Object.assign(this.plano(), lerForm($('#formPlano'))); gravaPlano(); });
 

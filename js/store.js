@@ -1,7 +1,8 @@
 /* Armazenamento dos dados do CHEMAQ.
  *
- * Nesta primeira versão tudo fica no próprio navegador (localStorage), e a aba
- * Configurações exporta e importa um arquivo de backup .json. Toda leitura e
+ * Nesta primeira versão tudo fica no próprio navegador (localStorage). O
+ * backup (js/backup.js) grava sozinho numa pasta escolhida (pode ser a do
+ * Google Drive) ou é baixado pela aba Configurações. Toda leitura e
  * gravação passa por este arquivo, então trocar por um banco na nuvem
  * (Supabase, como o SIGAB usa) mexe só aqui. */
 'use strict';
@@ -50,6 +51,7 @@ const DB = {
     } catch (e) {
       toast('Não foi possível gravar no navegador. Faça um backup agora.', true);
     }
+    if (typeof Backup !== 'undefined') Backup.mudou();
     if (!silencioso) document.dispatchEvent(new CustomEvent('chemaq:mudou'));
   },
 

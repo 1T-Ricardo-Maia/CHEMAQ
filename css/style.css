@@ -278,3 +278,58 @@ details.secao>:not(summary){margin:10px 12px}
 .peca.compras em{color:var(--sutil)}
 .catmat{margin:4px 0 2px}
 .catmat .alerta{margin-top:2px}
+.sugCat{margin:4px 0 2px;padding:6px 8px;border-left:2px solid var(--brass);background:var(--acento-bg);border-radius:2px;font-size:12.5px}
+.sugCat b{color:var(--dest);font-weight:500}
+.sugCat .mini{margin-left:6px}
+.catBusca{align-items:center}
+.catBusca .btn{width:100%}
+.catItem{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--line2);font-size:13px;line-height:1.45}
+.catItem .mini{flex:0 0 auto}
+.catItem b{font-family:var(--mono);font-weight:500;color:var(--dest)}
+/* Serviços */
+.ficha{display:grid;gap:4px;margin:4px 0 12px;padding:10px 12px;border-left:3px solid var(--brass);background:var(--acento-bg)}
+.pacotes button{text-transform:none;letter-spacing:.02em;font-size:13px}
+.mini-in.texto{width:100%;min-width:120px;text-align:left;font-family:var(--body)}
+#servConstat label.check{font-weight:400}
+#sPedido{width:100%;font-family:var(--mono);font-size:12px;margin-bottom:10px}
+#servEscopo td:first-child{min-width:280px}
+#servEscopo label.selmat{text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink);font-weight:400;margin:0}
+#servOrc input[type=date]{width:140px}
+
+/* ---- revisão nov/2026: backup, painel com ações, ficha do equipamento, modo rápido, app ---- */
+.topoDir{justify-self:end;display:flex;align-items:center;gap:14px}
+.btn.rapido{padding:8px 12px;font-size:12px}
+@media (max-width:560px){ .topoDir{gap:8px} .btn.rapido{padding:7px 9px;font-size:11px;letter-spacing:.08em} .topoDir .clock{display:none} }
+.avisoBackup p{margin:0 0 10px;line-height:1.5}
+button.link{background:none;border:0;padding:0;color:var(--ink);text-align:left;font:inherit;text-decoration:underline;
+  text-decoration-color:rgba(124,196,240,.35);text-underline-offset:3px}
+button.link:hover{color:var(--dest);text-decoration-color:var(--dest)}
+button.link:focus-visible{outline:2px solid var(--dest);outline-offset:2px}
+.lista .dir.botoes{display:flex;gap:4px;align-items:center;flex-wrap:wrap;justify-content:flex-end;font-family:var(--body)}
+.lista li{align-items:center}
+@media (max-width:560px){ .lista li{flex-direction:column;align-items:stretch} .lista .dir.botoes{justify-content:flex-start} }
+dialog.largo{width:min(920px,calc(100vw - 24px))}
+.fichaTopo{display:flex;justify-content:space-between;align-items:center;gap:10px;position:sticky;top:-20px;background:var(--cartao);
+  margin:-20px -20px 12px;padding:16px 20px 10px;border-bottom:1px solid var(--line);z-index:1}
+.fichaTopo h3{margin:0}
+.fdados{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:12px}
+.fdados span{display:block;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.fdados b{font-weight:500;font-size:15px}
+.fdados small{display:block;color:var(--sutil);font-size:11.5px}
+.fbotoes{margin:6px 0 14px}
+.fsec{border-top:1px solid var(--line);padding-top:10px;margin-top:12px}
+.fsec h4{font-family:var(--display);text-transform:uppercase;letter-spacing:.14em;font-size:13px;color:var(--muted);margin:0 0 6px}
+.fsec h4 .n{font-family:var(--mono);color:var(--terra);letter-spacing:0;margin-left:4px}
+.fsec .mini{margin-top:6px}
+.oculto{display:none !important}
+.falta{margin-top:10px}
+.falta .check label{margin-top:0}
+.falta .chips{margin-top:8px;align-items:center}
+.falta .chip{font-size:12px;padding:4px 10px;border-color:rgba(232,180,76,.45);color:var(--warn-ink)}
+.ok-ink{color:var(--ok-ink)}
+.tabela tr.realce td{background:var(--acento-bg);box-shadow:inset 0 1px 0 var(--brass),inset 0 -1px 0 var(--brass)}
+.tabela.plano select.baseCons{margin-top:4px;padding:4px 6px;font-size:12px;color:var(--muted)}
+.lista li:has(.dir.botoes){flex-direction:column;align-items:stretch;gap:6px}
+.lista li:has(.dir.botoes) .dir.botoes{justify-content:flex-start}
+#planoRegioes{margin-top:8px}
+.cab label{margin:8px 0 5px}
